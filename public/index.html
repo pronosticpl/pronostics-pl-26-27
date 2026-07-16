@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pronostics PL 26 -27</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">PL</span>
+          <div>
+            <h1>Pronostics PL 26 -27</h1>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="session-pill" id="sessionLabel">Non connecté</span>
+          <button class="ghost-button admin-only" id="exportBtn" type="button">Exporter</button>
+          <label class="import-button admin-only">
+            Importer
+            <input id="importInput" type="file" accept="application/json" />
+          </label>
+          <button class="danger-button admin-only" id="resetBtn" type="button">Reset</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <h2>Pronostics PL 26 -27</h2>
+          </div>
+          <div class="hero-stat">
+            <span id="nextMatchLabel">Aucun match</span>
+            <strong id="nextMatchTeams">Importe la saison 26-27</strong>
+          </div>
+        </section>
+
+        <section class="dashboard">
+          <aside class="panel">
+            <div class="panel-header">
+              <h3>Connexion</h3>
+              <span id="friendCount">0</span>
+            </div>
+            <form class="inline-form" id="signupForm">
+              <input id="signupName" type="text" placeholder="Pseudo" autocomplete="username" required />
+              <input id="signupPin" type="password" placeholder="Code PIN" autocomplete="new-password" required />
+              <button type="submit">S'inscrire</button>
+            </form>
+            <form class="inline-form split-form" id="loginForm">
+              <select id="loginUser" required></select>
+              <input id="loginPin" type="password" placeholder="PIN" autocomplete="current-password" required />
+              <button type="submit">Se connecter</button>
+            </form>
+            <button class="ghost-button wide-button" id="logoutBtn" type="button">Déconnexion</button>
+            <ul class="friend-list" id="friendList"></ul>
+          </aside>
+
+          <section class="panel main-panel">
+            <div class="panel-header">
+              <h3>Matchs</h3>
+              <div class="compact-actions admin-only">
+                <button class="subtle-button" id="syncBtn" type="button">Mettre à jour</button>
+              </div>
+            </div>
+
+            <div class="sync-box admin-only">
+              <input id="apiKey" type="password" placeholder="Clé football-data.org pour importer PL 26-27" />
+              <button class="ghost-button" id="saveKeyBtn" type="button">Garder la clé</button>
+              <button class="ghost-button" id="importLeagueBtn" type="button">Importer PL</button>
+              <p id="syncStatus">Importe les vrais matchs Premier League 2026-2027 avec ta clé API.</p>
+            </div>
+
+            <form class="match-form admin-only" id="matchForm">
+              <input id="teamA" type="text" placeholder="Équipe domicile" autocomplete="off" required />
+              <input id="teamB" type="text" placeholder="Équipe extérieur" autocomplete="off" required />
+              <input id="matchDate" type="datetime-local" />
+              <input id="matchday" type="number" min="1" placeholder="Journée" />
+              <button type="submit">Ajouter</button>
+            </form>
+
+            <div class="filter-row">
+              <label>
+                Journée
+                <select id="matchdayFilter"></select>
+              </label>
+            </div>
+
+            <div class="match-list" id="matchList"></div>
+          </section>
+
+          <aside class="panel">
+            <div class="panel-header">
+              <h3>Classement</h3>
+              <span id="matchCount">0</span>
+            </div>
+            <ol class="leaderboard" id="leaderboard"></ol>
+            <div class="rules">
+              <strong>Barème</strong>
+              <span>5 pts score exact</span>
+              <span>4 pts bon écart de buts</span>
+              <span>3 pts bon résultat</span>
+              <span>0 pt sinon</span>
+              <span>+3 pts vainqueur de journée</span>
+            </div>
+          </aside>
+        </section>
+
+        <section class="bonus-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Bonus saison</h3>
+              <span id="seasonBonusTotal">0</span>
+            </div>
+            <div class="bonus-grid" id="seasonBonusList"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="matchTemplate">
+      <article class="match-card">
+        <div class="match-head">
+          <div>
+            <p class="match-date"></p>
+            <h4></h4>
+          </div>
+          <button class="icon-button remove-match" type="button" title="Supprimer le match">×</button>
+        </div>
+        <div class="result-row">
+          <span>Résultat officiel</span>
+          <strong class="official-score">En attente</strong>
+        </div>
+        <div class="prediction-list"></div>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

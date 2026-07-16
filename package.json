@@ -1,0 +1,8 @@
+{
+  "name": "pronostics-pl-26-27",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "check": "node --check api/premier-league.js && node --check api/state.js && node --check api/key.js && node --check public/app.js"
+  }
+}
