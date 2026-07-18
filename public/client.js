@@ -31,6 +31,8 @@ let state = migrateState(loadState());
 let autoSyncTimer = null;
 let currentUserId = localStorage.getItem(sessionUserStorageKey);
 let remoteSaveTimer = null;
+let remoteRefreshTimer = null;
+let lastLocalChangeAt = 0;
 if (removeDemoMatches()) {
   localStorage.setItem(storageKey, JSON.stringify(state));
 }
@@ -1087,6 +1089,7 @@ function hasScore(score) {
 }
 
 function persist() {
+  lastLocalChangeAt = Date.now();
   localStorage.setItem(storageKey, JSON.stringify(state));
   render();
   queueRemoteSave();
@@ -1117,6 +1120,8 @@ async function saveRemoteState() {
 
 async function loadRemoteState() {
   if (location.protocol === "file:") return;
+  if (Date.now() - lastLocalChangeAt < 2000) return;
+  if (isEditingField()) return;
   try {
     const response = await fetch("/api/state");
     if (!response.ok) return;
@@ -1141,6 +1146,16 @@ async function loadRemoteState() {
   } catch (error) {
     console.error(error);
   }
+}
+
+function startRemoteRefresh() {
+  if (location.protocol === "file:" || remoteRefreshTimer) return;
+  remoteRefreshTimer = setInterval(() => loadRemoteState(), 8000);
+  window.addEventListener("focus", () => loadRemoteState());
+}
+
+function isEditingField() {
+  return ["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement?.tagName);
 }
 
 function stateForRemote() {
@@ -1229,3 +1244,4 @@ function setStatus(message) {
 render();
 ensureAutoSync();
 loadRemoteState();
+startRemoteRefresh();
