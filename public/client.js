@@ -238,6 +238,16 @@ els.importInput.addEventListener("change", async (event) => {
   }
 });
 
+window.addEventListener("storage", (event) => {
+  if (event.key !== storageKey || !event.newValue) return;
+  try {
+    state = migrateState(JSON.parse(event.newValue));
+    render();
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 async function syncPremierLeague(silent = false) {
   if (location.protocol === "file:") {
     setStatus("Ouvre NovaProno avec le serveur local pour importer les vrais matchs.");
