@@ -650,7 +650,7 @@ function renderLeaderboard() {
     days.forEach((day) => {
       const detail = matchdayDetailFor(user.id, day);
       const cell = document.createElement("td");
-      cell.textContent = detail.label;
+      cell.innerHTML = detail.html;
       if (detail.winner) cell.className = "day-winner";
       row.append(cell);
     });
@@ -716,13 +716,15 @@ function matchdayDetailFor(userId, day) {
   const allScores = state.users.map((user) => matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0));
   const best = allScores.length ? Math.max(...allScores) : 0;
   const winner = best > 0 && points === best;
-  const total = points + (winner ? 3 : 0);
+  const winnerBonus = winner ? 3 : 0;
+  const total = points + winnerBonus;
   return {
     day,
     points,
     winner,
+    winnerBonus,
     total,
-    label: total > 0 ? `${total} pts${winner ? " *" : ""}` : "-",
+    html: total > 0 ? `<strong>${total} pts</strong><span>${points}+${winnerBonus}</span>` : "-",
   };
 }
 
@@ -816,6 +818,9 @@ function applyTestMode() {
     { a: "2", b: "1" },
     { a: "1", b: "1" },
     { a: "0", b: "2" },
+    { a: "3", b: "2" },
+    { a: "2", b: "0" },
+    { a: "1", b: "2" },
   ];
 
   matches.forEach((match, index) => {
@@ -866,8 +871,15 @@ function applyTestSeasonBonus() {
 
 function ensureTestMatches() {
   const existing = state.matches.filter((match) => match.status === "TEST");
-  if (existing.length > 0) return existing.slice(0, 3);
-  return createTestMatches();
+  if (existing.length >= 6) return existing.slice(0, 6);
+  const previous = new Map(existing.map((match) => [match.externalId, match]));
+  state.matches = state.matches.filter((match) => match.status !== "TEST");
+  const matches = createTestMatches();
+  matches.forEach((match) => {
+    const oldMatch = previous.get(match.externalId);
+    if (oldMatch) match.predictions = oldMatch.predictions ?? {};
+  });
+  return matches;
 }
 
 function createTestMatches() {
@@ -876,6 +888,9 @@ function createTestMatches() {
     ["Arsenal", "Liverpool"],
     ["Chelsea", "Manchester United"],
     ["Tottenham", "Manchester City"],
+    ["Everton", "Newcastle"],
+    ["Aston Villa", "West Ham"],
+    ["Brighton", "Fulham"],
   ];
 
   const matches = teams.map(([teamA, teamB], index) => ({
@@ -884,7 +899,7 @@ function createTestMatches() {
     teamA,
     teamB,
     date: new Date(kickoff.getTime() + index * 60 * 60 * 1000).toISOString(),
-    matchday: 1,
+    matchday: index < 3 ? 1 : 2,
     status: "TEST",
     result: { a: "", b: "" },
     predictions: {},

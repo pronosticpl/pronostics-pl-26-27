@@ -436,6 +436,14 @@ form button {
   font-weight: 850;
 }
 
+.leader-table td span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
 .rules {
   margin-top: 14px;
   padding-top: 13px;
