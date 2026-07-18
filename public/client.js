@@ -2,6 +2,8 @@ const storageKey = "novaprono-v2";
 const sessionUserStorageKey = "novaprono-current-user";
 const apiKeyStorageKey = "novaprono-football-data-key";
 const testModeStorageKey = "novaprono-test-mode";
+const accessStorageKey = "novaprono-access-ok";
+const sitePassword = "YNWA";
 const competitionCode = "PL";
 const seasonYear = 2026;
 const adminName = "Norbert";
@@ -34,6 +36,11 @@ if (removeDemoMatches()) {
 }
 
 const els = {
+  accessGate: document.querySelector("#accessGate"),
+  accessForm: document.querySelector("#accessForm"),
+  accessPassword: document.querySelector("#accessPassword"),
+  accessError: document.querySelector("#accessError"),
+  appShell: document.querySelector("#appShell"),
   signupForm: document.querySelector("#signupForm"),
   signupName: document.querySelector("#signupName"),
   signupPin: document.querySelector("#signupPin"),
@@ -70,7 +77,33 @@ const els = {
   adminOnly: document.querySelectorAll(".admin-only"),
 };
 
+setupAccessGate();
+
 els.apiKey.value = localStorage.getItem(apiKeyStorageKey) ?? "";
+
+function setupAccessGate() {
+  const unlocked = localStorage.getItem(accessStorageKey) === "true";
+  if (unlocked) {
+    els.accessGate.hidden = true;
+    els.appShell.hidden = false;
+    return;
+  }
+
+  els.accessGate.hidden = false;
+  els.appShell.hidden = true;
+  els.accessForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = els.accessPassword.value.trim().toUpperCase();
+    if (value !== sitePassword) {
+      els.accessError.hidden = false;
+      els.accessPassword.select();
+      return;
+    }
+    localStorage.setItem(accessStorageKey, "true");
+    els.accessGate.hidden = true;
+    els.appShell.hidden = false;
+  });
+}
 
 els.signupForm.addEventListener("submit", (event) => {
   event.preventDefault();

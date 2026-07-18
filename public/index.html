@@ -7,7 +7,20 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app-shell">
+    <section class="access-gate" id="accessGate">
+      <form class="access-card" id="accessForm">
+        <span class="brand-mark" aria-hidden="true">PL</span>
+        <h1>Pronostics PL 26 -27</h1>
+        <label>
+          Mot de passe
+          <input id="accessPassword" type="password" autocomplete="current-password" />
+        </label>
+        <button class="primary-button" type="submit">Entrer</button>
+        <p class="access-error" id="accessError" hidden>Mot de passe incorrect.</p>
+      </form>
+    </section>
+
+    <div class="app-shell" id="appShell" hidden>
       <header class="topbar">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">PL</span>
