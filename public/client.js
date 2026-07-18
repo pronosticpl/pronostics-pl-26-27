@@ -457,8 +457,9 @@ function renderPredictions(container, match) {
   }
 
   const locked = isMatchLocked(match);
-  const inputsLocked = locked && !state.testMode;
-  const showPublicPredictions = locked || state.testMode;
+  const isTestMatch = state.testMode && match.status === "TEST";
+  const inputsLocked = locked && !isTestMatch;
+  const showPublicPredictions = locked || isTestMatch;
   const prediction = match.predictions[user.id] ?? { a: "", b: "" };
   const row = document.createElement("div");
   row.className = "prediction-row";
@@ -480,8 +481,8 @@ function renderPredictions(container, match) {
     inputA.title = "Prono verrouillé après le début du match";
     inputB.title = "Prono verrouillé après le début du match";
   }
-  inputA.addEventListener("input", () => updatePrediction(match.id, user.id, "a", inputA.value));
-  inputB.addEventListener("input", () => updatePrediction(match.id, user.id, "b", inputB.value));
+  inputA.addEventListener("change", () => updatePrediction(match.id, user.id, "a", inputA.value));
+  inputB.addEventListener("change", () => updatePrediction(match.id, user.id, "b", inputB.value));
   inputs.append(inputA, dash, inputB);
 
   const points = document.createElement("span");
@@ -644,7 +645,7 @@ function pointsFor(match, userId) {
 function updatePrediction(matchId, userId, side, value) {
   const match = state.matches.find((item) => item.id === matchId);
   if (!match) return;
-  if (isMatchLocked(match) && !state.testMode) {
+  if (isMatchLocked(match) && !(state.testMode && match.status === "TEST")) {
     alert("Les pronostics sont verrouillés après le début du match.");
     render();
     return;
