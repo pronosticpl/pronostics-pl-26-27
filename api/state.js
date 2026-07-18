@@ -25,7 +25,7 @@ async function readRemoteState(response) {
   try {
     sendJson(response, 200, { state: await readStoredState() });
   } catch (error) {
-    sendJson(response, 502, { error: "Impossible de lire Supabase.", detail: `${error.message} | ${configLabel()}` });
+    sendJson(response, 502, { error: "Impossible de lire Supabase.", detail: `${configLabel()} | ${error.message}` });
   }
 }
 
@@ -44,7 +44,7 @@ async function writeRemoteState(request, response) {
     await upsertState(state);
     sendJson(response, 200, { ok: true, state });
   } catch (error) {
-    sendJson(response, 400, { error: "Impossible de sauvegarder l'état.", detail: `${error.message} | ${configLabel()}` });
+    sendJson(response, 400, { error: "Impossible de sauvegarder l'état.", detail: `${configLabel()} | ${error.message}` });
   }
 }
 
