@@ -868,10 +868,6 @@ function updatePrediction(matchId, userId, side, value) {
   }
   match.predictions[userId] = match.predictions[userId] ?? { a: "", b: "" };
   match.predictions[userId][side] = value;
-  if (state.testMode && match.status === "TEST") {
-    localStorage.setItem(storageKey, JSON.stringify(state));
-    return;
-  }
   persist();
 }
 
@@ -923,7 +919,7 @@ function applyTestMode() {
   state.testMode = true;
   localStorage.setItem(testModeStorageKey, "true");
   setStatus("Mode test activé : matchs et bonus fictifs ajoutés.");
-  persistLocalOnly();
+  persist();
 }
 
 function applyTestSeasonBonus() {
@@ -1110,6 +1106,7 @@ async function saveRemoteState() {
   try {
     await fetch("/api/state", {
       method: "PUT",
+      cache: "no-store",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ state: stateForRemote() }),
     });
@@ -1123,7 +1120,7 @@ async function loadRemoteState() {
   if (Date.now() - lastLocalChangeAt < 2000) return;
   if (isEditingField()) return;
   try {
-    const response = await fetch("/api/state");
+    const response = await fetch(`/api/state?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) return;
     const payload = await response.json();
     if (!payload.state) {
