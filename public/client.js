@@ -598,40 +598,57 @@ function renderLeaderboard() {
   els.leaderboard.innerHTML = "";
 
   if (rows.length === 0) {
-    els.leaderboard.innerHTML = '<li class="empty-state">Classement vide.</li>';
+    els.leaderboard.innerHTML = '<p class="empty-state">Classement vide.</p>';
     return;
   }
 
-  rows.forEach((user) => {
-    const item = document.createElement("li");
-    item.innerHTML = `
-      <div class="leader-main">
-        <span class="leader-name"></span>
-        <strong>${user.points} pts</strong>
-      </div>
-      <div class="leader-details"></div>
-    `;
-    item.querySelector(".leader-name").textContent = user.name;
-    item.querySelector(".leader-details").append(renderLeaderDetails(user.id));
-    els.leaderboard.append(item);
-  });
-}
-
-function renderLeaderDetails(userId) {
-  const box = document.createElement("div");
-  box.className = "leader-detail-grid";
-
-  matchdayDetailsFor(userId).forEach((detail) => {
-    const line = document.createElement("span");
-    line.textContent = `J${detail.day}: ${detail.points} pts${detail.winner ? " + vainqueur" : ""}`;
-    box.append(line);
+  const days = leaderboardDays();
+  const table = document.createElement("table");
+  table.className = "leader-table";
+  const header = document.createElement("thead");
+  header.innerHTML = `
+    <tr>
+      <th>Joueur</th>
+      <th>Total</th>
+      <th>Bonus</th>
+    </tr>
+  `;
+  const headerRow = header.querySelector("tr");
+  days.forEach((day) => {
+    const th = document.createElement("th");
+    th.textContent = `J${day}`;
+    headerRow.append(th);
   });
 
-  const bonus = seasonBonusDetailsFor(userId);
-  const bonusLine = document.createElement("span");
-  bonusLine.textContent = bonus.available ? `Bonus saison: ${bonus.points} pts` : "Bonus saison: en attente";
-  box.append(bonusLine);
-  return box;
+  const body = document.createElement("tbody");
+  rows.forEach((user, index) => {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    nameCell.className = "leader-player";
+    nameCell.innerHTML = `<span>${index + 1}</span><strong></strong>`;
+    nameCell.querySelector("strong").textContent = user.name;
+
+    const totalCell = document.createElement("td");
+    totalCell.className = "leader-total";
+    totalCell.textContent = `${user.points} pts`;
+
+    const bonus = seasonBonusDetailsFor(user.id);
+    const bonusCell = document.createElement("td");
+    bonusCell.textContent = bonus.available ? `${bonus.points} pts` : "-";
+
+    row.append(nameCell, totalCell, bonusCell);
+    days.forEach((day) => {
+      const detail = matchdayDetailFor(user.id, day);
+      const cell = document.createElement("td");
+      cell.textContent = detail.label;
+      if (detail.winner) cell.className = "day-winner";
+      row.append(cell);
+    });
+    body.append(row);
+  });
+
+  table.append(header, body);
+  els.leaderboard.append(table);
 }
 
 function renderHeaderStats() {
@@ -679,15 +696,28 @@ function bonusByUser() {
   return bonus;
 }
 
+function leaderboardDays() {
+  return [...new Set(state.matches.map((match) => match.matchday).filter(Boolean))].sort((a, b) => a - b);
+}
+
+function matchdayDetailFor(userId, day) {
+  const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
+  const points = matches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
+  const allScores = state.users.map((user) => matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0));
+  const best = allScores.length ? Math.max(...allScores) : 0;
+  const winner = best > 0 && points === best;
+  const total = points + (winner ? 3 : 0);
+  return {
+    day,
+    points,
+    winner,
+    total,
+    label: total > 0 ? `${total} pts${winner ? " *" : ""}` : "-",
+  };
+}
+
 function matchdayDetailsFor(userId) {
-  const days = [...new Set(state.matches.map((match) => match.matchday).filter(Boolean))].sort((a, b) => a - b);
-  return days.map((day) => {
-    const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
-    const points = matches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
-    const allScores = state.users.map((user) => matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0));
-    const best = allScores.length ? Math.max(...allScores) : 0;
-    return { day, points, winner: best > 0 && points === best };
-  }).filter((detail) => detail.points > 0 || detail.winner);
+  return leaderboardDays().map((day) => matchdayDetailFor(userId, day)).filter((detail) => detail.points > 0 || detail.winner);
 }
 
 function seasonBonusDetailsFor(userId) {
