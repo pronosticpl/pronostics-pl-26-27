@@ -12,9 +12,10 @@ const seasonBonusCategories = [
   { id: "champion", label: "Champion", points: 10 },
   { id: "bestAttack", label: "Meilleure attaque", points: 5 },
   { id: "bestDefense", label: "Meilleure défense", points: 5 },
-  { id: "goldenGloves", label: "Golden gloves", points: 5 },
-  { id: "topScorer", label: "Meilleur buteur", points: 5 },
-  { id: "bestPlayer", label: "Meilleur joueur", points: 5 },
+  { id: "topScorer", label: "Meilleur buteur", points: 3 },
+  { id: "bestAssister", label: "Meilleur passeur", points: 3 },
+  { id: "goldenGloves", label: "Meilleur gardien", points: 3 },
+  { id: "bestPlayer", label: "Meilleur joueur", points: 3 },
 ];
 
 const defaultState = {
@@ -940,16 +941,18 @@ function applyTestSeasonBonus() {
     champion: "Arsenal",
     bestAttack: "Manchester City",
     bestDefense: "Liverpool",
-    goldenGloves: "Alisson",
     topScorer: "Erling Haaland",
+    bestAssister: "Kevin De Bruyne",
+    goldenGloves: "Alisson",
     bestPlayer: "Bukayo Saka",
   };
   const alternatives = {
     champion: "Liverpool",
     bestAttack: "Arsenal",
     bestDefense: "Chelsea",
-    goldenGloves: "David Raya",
     topScorer: "Mohamed Salah",
+    bestAssister: "Bruno Fernandes",
+    goldenGloves: "David Raya",
     bestPlayer: "Cole Palmer",
   };
 
