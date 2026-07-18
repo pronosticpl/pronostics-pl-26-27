@@ -24,8 +24,8 @@ async function readRemoteState(response) {
 
   try {
     sendJson(response, 200, { state: await readStoredState() });
-  } catch {
-    sendJson(response, 502, { error: "Impossible de lire Supabase." });
+  } catch (error) {
+    sendJson(response, 502, { error: "Impossible de lire Supabase.", detail: error.message });
   }
 }
 
@@ -36,7 +36,8 @@ async function writeRemoteState(request, response) {
   }
 
   try {
-    const incomingState = request.body?.state;
+    const body = await readBody(request);
+    const incomingState = body.state;
     if (!incomingState || typeof incomingState !== "object") throw new Error("Etat invalide");
     const state = mergeStates(await readStoredState(), incomingState);
 
@@ -50,11 +51,34 @@ async function writeRemoteState(request, response) {
       }),
     });
 
-    if (!apiResponse.ok) throw new Error(`Supabase ${apiResponse.status}`);
+    if (!apiResponse.ok) throw new Error(`Supabase ${apiResponse.status}: ${await apiResponse.text()}`);
     sendJson(response, 200, { ok: true, state });
-  } catch {
-    sendJson(response, 400, { error: "Impossible de sauvegarder l'état." });
+  } catch (error) {
+    sendJson(response, 400, { error: "Impossible de sauvegarder l'état.", detail: error.message });
   }
+}
+
+function readBody(request) {
+  if (request.body && typeof request.body === "object") return Promise.resolve(request.body);
+  if (typeof request.body === "string") return Promise.resolve(JSON.parse(request.body || "{}"));
+  return new Promise((resolve, reject) => {
+    let body = "";
+    request.on("data", (chunk) => {
+      body += chunk;
+      if (body.length > 500000) {
+        request.destroy();
+        reject(new Error("Requête trop grande"));
+      }
+    });
+    request.on("end", () => {
+      try {
+        resolve(JSON.parse(body || "{}"));
+      } catch (error) {
+        reject(error);
+      }
+    });
+    request.on("error", reject);
+  });
 }
 
 async function readStoredState() {
