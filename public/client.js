@@ -675,10 +675,8 @@ function removeMatch(matchId) {
 
 function applyTestMode() {
   if (!requireAdmin()) return;
-  const firstDay = firstMatchday();
-  const matches = firstDay
-    ? sortedMatches().filter((match) => match.matchday === firstDay).slice(0, 3)
-    : createTestMatches();
+  state.matches = state.matches.filter((match) => match.status !== "TEST");
+  const matches = createTestMatches();
 
   if (matches.length === 0) {
     alert("Aucun match de première journée à tester.");
