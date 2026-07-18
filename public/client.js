@@ -481,8 +481,14 @@ function renderPredictions(container, match) {
     inputA.title = "Prono verrouillé après le début du match";
     inputB.title = "Prono verrouillé après le début du match";
   }
-  inputA.addEventListener("change", () => updatePrediction(match.id, user.id, "a", inputA.value));
-  inputB.addEventListener("change", () => updatePrediction(match.id, user.id, "b", inputB.value));
+  inputA.addEventListener("change", () => {
+    updatePrediction(match.id, user.id, "a", inputA.value);
+    refreshTestPredictionPoints(match, user.id, points);
+  });
+  inputB.addEventListener("change", () => {
+    updatePrediction(match.id, user.id, "b", inputB.value);
+    refreshTestPredictionPoints(match, user.id, points);
+  });
   inputs.append(inputA, dash, inputB);
 
   const points = document.createElement("span");
@@ -519,6 +525,14 @@ function renderPublicMatchPredictions(match) {
   });
 
   return box;
+}
+
+function refreshTestPredictionPoints(match, userId, pointsElement) {
+  if (!(state.testMode && match.status === "TEST")) return;
+  pointsElement.innerHTML = `<strong>${pointsFor(match, userId)}</strong> pts`;
+  const publicPredictions = pointsElement.closest(".prediction-list")?.querySelector(".public-predictions");
+  if (publicPredictions) publicPredictions.replaceWith(renderPublicMatchPredictions(match));
+  renderLeaderboard();
 }
 
 function renderPublicSeasonBonus() {
