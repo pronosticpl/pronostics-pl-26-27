@@ -628,10 +628,14 @@ function pointsFor(match, userId) {
   const sameOutcome = outcome(resultA, resultB) === outcome(predA, predB);
   const sameDiff = resultA - resultB === predA - predB;
 
-  if (exactScore) return 5;
-  if (sameDiff) return 4;
-  if (sameOutcome) return 3;
-  return 0;
+  if (exactScore) return 6;
+
+  let points = 0;
+  if (resultA === predA) points += 1;
+  if (resultB === predB) points += 1;
+  if (sameOutcome) points += 2;
+  if (sameDiff) points += 1;
+  return points;
 }
 
 function updatePrediction(matchId, userId, side, value) {
@@ -664,7 +668,9 @@ function removeMatch(matchId) {
 function applyTestMode() {
   if (!requireAdmin()) return;
   const firstDay = firstMatchday();
-  const matches = sortedMatches().filter((match) => match.matchday === firstDay).slice(0, 3);
+  const matches = firstDay
+    ? sortedMatches().filter((match) => match.matchday === firstDay).slice(0, 3)
+    : createTestMatches();
 
   if (matches.length === 0) {
     alert("Aucun match de première journée à tester.");
@@ -685,6 +691,30 @@ function applyTestMode() {
   state.testMode = true;
   setStatus("Mode test activé : pronos visibles et 3 résultats fictifs ajoutés.");
   persist();
+}
+
+function createTestMatches() {
+  const kickoff = new Date();
+  const teams = [
+    ["Arsenal", "Liverpool"],
+    ["Chelsea", "Manchester United"],
+    ["Tottenham", "Manchester City"],
+  ];
+
+  const matches = teams.map(([teamA, teamB], index) => ({
+    id: crypto.randomUUID(),
+    externalId: `test-${index + 1}`,
+    teamA,
+    teamB,
+    date: new Date(kickoff.getTime() + index * 60 * 60 * 1000).toISOString(),
+    matchday: 1,
+    status: "TEST",
+    result: { a: "", b: "" },
+    predictions: {},
+  }));
+
+  state.matches.push(...matches);
+  return matches;
 }
 
 function firstMatchday() {
