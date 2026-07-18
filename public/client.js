@@ -1405,12 +1405,24 @@ function migrateState(raw) {
 }
 
 function scoreInput(value) {
-  const input = document.createElement("input");
-  input.type = "number";
-  input.min = "0";
-  input.inputMode = "numeric";
-  input.value = value ?? "";
-  return input;
+  const select = document.createElement("select");
+  select.className = "score-select";
+  select.setAttribute("aria-label", "Score");
+
+  const emptyOption = document.createElement("option");
+  emptyOption.value = "";
+  emptyOption.textContent = "-";
+  select.append(emptyOption);
+
+  for (let score = 0; score <= 10; score += 1) {
+    const option = document.createElement("option");
+    option.value = String(score);
+    option.textContent = String(score);
+    select.append(option);
+  }
+
+  select.value = value ?? "";
+  return select;
 }
 
 function formatDate(value) {
