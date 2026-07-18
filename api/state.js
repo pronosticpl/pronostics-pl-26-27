@@ -63,7 +63,14 @@ async function readStoredState() {
   });
   const rows = await apiResponse.json();
   const value = rows[0]?.value;
-  return value ? JSON.parse(value) : null;
+  return parseStoredValue(value);
+}
+
+function parseStoredValue(value) {
+  if (!value) return null;
+  if (typeof value === "string") return JSON.parse(value);
+  if (typeof value === "object") return value;
+  return null;
 }
 
 function mergeStates(stored, incoming) {
