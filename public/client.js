@@ -77,9 +77,12 @@ const els = {
   nextMatchTeams: document.querySelector("#nextMatchTeams"),
   matchTemplate: document.querySelector("#matchTemplate"),
   adminOnly: document.querySelectorAll(".admin-only"),
+  mobileTabs: document.querySelectorAll("[data-mobile-tab]"),
+  mobilePanels: document.querySelectorAll("[data-mobile-panel]"),
 };
 
 setupAccessGate();
+setupMobileTabs();
 
 els.apiKey.value = localStorage.getItem(apiKeyStorageKey) ?? "";
 
@@ -104,6 +107,25 @@ function setupAccessGate() {
     localStorage.setItem(accessStorageKey, "true");
     els.accessGate.hidden = true;
     els.appShell.hidden = false;
+  });
+}
+
+function setupMobileTabs() {
+  els.mobileTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      setMobileTab(tab.dataset.mobileTab);
+    });
+  });
+  setMobileTab("matches");
+}
+
+function setMobileTab(tabName) {
+  document.body.dataset.mobileTab = tabName;
+  els.mobileTabs.forEach((tab) => {
+    tab.classList.toggle("is-active", tab.dataset.mobileTab === tabName);
+  });
+  els.mobilePanels.forEach((panel) => {
+    panel.classList.toggle("is-mobile-active", panel.dataset.mobilePanel === tabName);
   });
 }
 

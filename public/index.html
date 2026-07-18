@@ -50,8 +50,16 @@
           </div>
         </section>
 
+        <nav class="mobile-tabs" aria-label="Navigation mobile">
+          <button class="mobile-tab is-active" type="button" data-mobile-tab="matches">Matchs</button>
+          <button class="mobile-tab" type="button" data-mobile-tab="standing">Classement</button>
+          <button class="mobile-tab" type="button" data-mobile-tab="stats">Stats</button>
+          <button class="mobile-tab" type="button" data-mobile-tab="bonus">Bonus</button>
+          <button class="mobile-tab" type="button" data-mobile-tab="login">Connexion</button>
+        </nav>
+
         <section class="dashboard">
-          <aside class="panel">
+          <aside class="panel" data-mobile-panel="login">
             <div class="panel-header">
               <h3>Connexion</h3>
               <span id="friendCount">0</span>
@@ -70,7 +78,7 @@
             <ul class="friend-list" id="friendList"></ul>
           </aside>
 
-          <section class="panel main-panel">
+          <section class="panel main-panel" data-mobile-panel="matches">
             <div class="panel-header">
               <h3>Matchs</h3>
               <div class="compact-actions">
@@ -104,7 +112,7 @@
             <div class="match-list" id="matchList"></div>
           </section>
 
-          <aside class="panel">
+          <aside class="panel" data-mobile-panel="standing">
             <div class="panel-header">
               <h3>Classement</h3>
               <span id="matchCount">0</span>
@@ -128,7 +136,7 @@
           </aside>
         </section>
 
-        <section class="stats-section">
+        <section class="stats-section" data-mobile-panel="stats">
           <div class="panel">
             <div class="panel-header">
               <h3>Stats joueurs</h3>
@@ -138,7 +146,7 @@
           </div>
         </section>
 
-        <section class="bonus-section">
+        <section class="bonus-section" data-mobile-panel="bonus">
           <div class="panel">
             <div class="panel-header">
               <h3>Bonus saison</h3>
