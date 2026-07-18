@@ -53,6 +53,8 @@ const els = {
   friendList: document.querySelector("#friendList"),
   friendCount: document.querySelector("#friendCount"),
   sessionLabel: document.querySelector("#sessionLabel"),
+  refreshStateBtn: document.querySelector("#refreshStateBtn"),
+  remoteStatus: document.querySelector("#remoteStatus"),
   matchForm: document.querySelector("#matchForm"),
   teamA: document.querySelector("#teamA"),
   teamB: document.querySelector("#teamB"),
@@ -190,6 +192,10 @@ els.matchForm.addEventListener("submit", (event) => {
 els.matchdayFilter.addEventListener("change", () => {
   state.matchdayFilter = els.matchdayFilter.value;
   persist();
+});
+
+els.refreshStateBtn.addEventListener("click", async () => {
+  await forceRemoteSync();
 });
 
 els.seasonBonusList.addEventListener("change", (event) => {
@@ -1104,30 +1110,43 @@ function queueRemoteSave() {
 
 async function saveRemoteState() {
   try {
+    setRemoteStatus("Envoi...");
     const response = await fetch("/api/state", {
       method: "PUT",
       cache: "no-store",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ state: stateForRemote() }),
     });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setRemoteStatus("Erreur synchro");
+      return;
+    }
     const payload = await response.json();
-    if (!payload.state) return;
+    if (!payload.state) {
+      setRemoteStatus("Serveur vide");
+      return;
+    }
     state = mergeClientStates(state, migrateState(payload.state));
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
+    setRemoteStatus(`Synchro OK · ${state.users.length} joueur${state.users.length > 1 ? "s" : ""}`);
   } catch (error) {
+    setRemoteStatus("Erreur synchro");
     console.error(error);
   }
 }
 
-async function loadRemoteState() {
+async function loadRemoteState(force = false) {
   if (location.protocol === "file:") return;
-  if (Date.now() - lastLocalChangeAt < 2000) return;
-  if (isEditingField()) return;
+  if (!force && Date.now() - lastLocalChangeAt < 2000) return;
+  if (!force && isEditingField()) return;
   try {
+    setRemoteStatus("Lecture...");
     const response = await fetch(`/api/state?ts=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setRemoteStatus("Erreur synchro");
+      return;
+    }
     const payload = await response.json();
     if (!payload.state) {
       await saveRemoteState();
@@ -1146,15 +1165,26 @@ async function loadRemoteState() {
     }
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
+    setRemoteStatus(`Synchro OK · ${state.users.length} joueur${state.users.length > 1 ? "s" : ""}`);
   } catch (error) {
+    setRemoteStatus("Erreur synchro");
     console.error(error);
   }
 }
 
+async function forceRemoteSync() {
+  if (location.protocol === "file:") {
+    setRemoteStatus("Serveur requis");
+    return;
+  }
+  await loadRemoteState(true);
+  await saveRemoteState();
+}
+
 function startRemoteRefresh() {
   if (location.protocol === "file:" || remoteRefreshTimer) return;
-  remoteRefreshTimer = setInterval(() => loadRemoteState(), 8000);
-  window.addEventListener("focus", () => loadRemoteState());
+  remoteRefreshTimer = setInterval(() => loadRemoteState(), 5000);
+  window.addEventListener("focus", () => loadRemoteState(true));
 }
 
 function isEditingField() {
@@ -1292,6 +1322,10 @@ function same(a, b) {
 
 function setStatus(message) {
   els.syncStatus.textContent = message;
+}
+
+function setRemoteStatus(message) {
+  if (els.remoteStatus) els.remoteStatus.textContent = message;
 }
 
 render();
