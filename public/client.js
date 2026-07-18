@@ -653,7 +653,7 @@ function updatePrediction(matchId, userId, side, value) {
   match.predictions[userId] = match.predictions[userId] ?? { a: "", b: "" };
   match.predictions[userId][side] = value;
   if (state.testMode && match.status === "TEST") {
-    persistLocalOnly();
+    localStorage.setItem(storageKey, JSON.stringify(state));
     return;
   }
   persist();
