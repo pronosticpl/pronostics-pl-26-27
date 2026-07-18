@@ -595,7 +595,8 @@ function renderPublicMatchPredictions(match) {
     const prediction = match.predictions[user.id];
     const item = document.createElement("p");
     const score = hasScore(prediction) ? `${prediction.a} - ${prediction.b}` : "Aucun prono";
-    item.innerHTML = `<span></span><b>${score}</b>`;
+    const points = pointsFor(match, user.id);
+    item.innerHTML = `<span></span><b><span>${score}</span><small>${points} pts</small></b>`;
     item.querySelector("span").textContent = user.name;
     box.append(item);
   });

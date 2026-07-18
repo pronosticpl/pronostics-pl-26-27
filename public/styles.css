@@ -663,8 +663,17 @@ form button {
 
 .public-bonus b,
 .public-predictions b {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
   color: var(--ink);
   text-align: right;
+}
+
+.public-predictions small {
+  color: var(--gold);
+  font-size: 0.86rem;
+  white-space: nowrap;
 }
 
 .match-list {
