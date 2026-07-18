@@ -41,21 +41,35 @@ async function writeRemoteState(request, response) {
     if (!incomingState || typeof incomingState !== "object") throw new Error("Etat invalide");
     const state = mergeStates(await readStoredState(), incomingState);
 
-    const apiResponse = await supabaseRequest("/rest/v1/app_settings?on_conflict=key", {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify({
-        key: "state",
-        value: JSON.stringify(state),
-        updated_at: new Date().toISOString(),
-      }),
-    });
-
-    if (!apiResponse.ok) throw new Error(`Supabase ${apiResponse.status}: ${await apiResponse.text()}`);
+    await upsertState(state);
     sendJson(response, 200, { ok: true, state });
   } catch (error) {
     sendJson(response, 400, { error: "Impossible de sauvegarder l'état.", detail: error.message });
   }
+}
+
+async function upsertState(state) {
+  const updatedAt = new Date().toISOString();
+  const objectResponse = await postStateValue(state, updatedAt);
+  if (objectResponse.ok) return;
+
+  const objectError = `Supabase ${objectResponse.status}: ${await objectResponse.text()}`;
+  const textResponse = await postStateValue(JSON.stringify(state), updatedAt);
+  if (textResponse.ok) return;
+
+  throw new Error(`${objectError} / Texte: Supabase ${textResponse.status}: ${await textResponse.text()}`);
+}
+
+function postStateValue(value, updatedAt) {
+  return supabaseRequest("/rest/v1/app_settings?on_conflict=key", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({
+      key: "state",
+      value,
+      updated_at: updatedAt,
+    }),
+  });
 }
 
 function readBody(request) {
@@ -85,6 +99,7 @@ async function readStoredState() {
   const apiResponse = await supabaseRequest("/rest/v1/app_settings?key=eq.state&select=value", {
     method: "GET",
   });
+  if (!apiResponse.ok) throw new Error(`Supabase ${apiResponse.status}: ${await apiResponse.text()}`);
   const rows = await apiResponse.json();
   const value = rows[0]?.value;
   return parseStoredValue(value);
