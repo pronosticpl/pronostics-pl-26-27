@@ -1104,12 +1104,18 @@ function queueRemoteSave() {
 
 async function saveRemoteState() {
   try {
-    await fetch("/api/state", {
+    const response = await fetch("/api/state", {
       method: "PUT",
       cache: "no-store",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ state: stateForRemote() }),
     });
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!payload.state) return;
+    state = migrateState(payload.state);
+    localStorage.setItem(storageKey, JSON.stringify(state));
+    render();
   } catch (error) {
     console.error(error);
   }
