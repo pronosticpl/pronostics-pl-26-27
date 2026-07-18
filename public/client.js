@@ -71,6 +71,8 @@ const els = {
   syncStatus: document.querySelector("#syncStatus"),
   seasonBonusList: document.querySelector("#seasonBonusList"),
   seasonBonusTotal: document.querySelector("#seasonBonusTotal"),
+  playerStats: document.querySelector("#playerStats"),
+  statsCount: document.querySelector("#statsCount"),
   nextMatchLabel: document.querySelector("#nextMatchLabel"),
   nextMatchTeams: document.querySelector("#nextMatchTeams"),
   matchTemplate: document.querySelector("#matchTemplate"),
@@ -338,6 +340,7 @@ function render() {
   renderMatches();
   renderSeasonBonus();
   renderLeaderboard();
+  renderPlayerStats();
   renderHeaderStats();
   renderSession();
   renderAdminControls();
@@ -661,6 +664,39 @@ function renderLeaderboard() {
   els.leaderboard.append(table);
 }
 
+function renderPlayerStats() {
+  els.playerStats.innerHTML = "";
+  els.statsCount.textContent = state.users.length;
+
+  if (state.users.length === 0) {
+    els.playerStats.innerHTML = '<p class="empty-state">Aucun joueur inscrit.</p>';
+    return;
+  }
+
+  standings().forEach((user) => {
+    const stats = playerStatsFor(user.id);
+    const card = document.createElement("article");
+    card.className = "stat-card";
+    card.innerHTML = `
+      <div class="stat-title">
+        <h4></h4>
+        <strong>${stats.total} pts</strong>
+      </div>
+      <div class="stat-grid">
+        <span><b>${stats.predictions}</b> pronos</span>
+        <span><b>${stats.exactScores}</b> scores exacts</span>
+        <span><b>${stats.goodResults}</b> bons résultats</span>
+        <span><b>${stats.dayWins}</b> journées gagnées</span>
+        <span><b>${stats.matchPoints}</b> pts matchs</span>
+        <span><b>${stats.seasonBonus}</b> pts bonus</span>
+        <span><b>${stats.average}</b> pts/prono</span>
+      </div>
+    `;
+    card.querySelector("h4").textContent = user.name;
+    els.playerStats.append(card);
+  });
+}
+
 function renderHeaderStats() {
   const upcoming = sortedMatches().find((match) => !hasResult(match));
   if (!upcoming) {
@@ -735,6 +771,33 @@ function matchdayDetailsFor(userId) {
 function seasonBonusDetailsFor(userId) {
   const available = seasonBonusCategories.some((category) => Boolean(state.seasonBonus.official[category.id]));
   return { available, points: seasonBonusPointsFor(userId) };
+}
+
+function playerStatsFor(userId) {
+  const resultMatches = state.matches.filter((match) => hasResult(match));
+  const predictedMatches = resultMatches.filter((match) => hasScore(match.predictions[userId]));
+  const matchPoints = resultMatches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
+  const dayWins = matchdayDetailsFor(userId).filter((detail) => detail.winner).length;
+  const seasonBonus = seasonBonusPointsFor(userId);
+  const exactScores = predictedMatches.filter((match) => {
+    const prediction = match.predictions[userId];
+    return Number(match.result.a) === Number(prediction.a) && Number(match.result.b) === Number(prediction.b);
+  }).length;
+  const goodResults = predictedMatches.filter((match) => {
+    const prediction = match.predictions[userId];
+    return outcome(Number(match.result.a), Number(match.result.b)) === outcome(Number(prediction.a), Number(prediction.b));
+  }).length;
+
+  return {
+    predictions: predictedMatches.length,
+    exactScores,
+    goodResults,
+    dayWins,
+    matchPoints,
+    seasonBonus,
+    total: matchPoints + seasonBonus + dayWins * 3,
+    average: predictedMatches.length ? (matchPoints / predictedMatches.length).toFixed(1) : "0.0",
+  };
 }
 
 function seasonBonusPointsFor(userId) {
