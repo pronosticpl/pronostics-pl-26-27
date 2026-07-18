@@ -457,6 +457,7 @@ function renderPredictions(container, match) {
   }
 
   const locked = isMatchLocked(match);
+  const inputsLocked = locked && !state.testMode;
   const showPublicPredictions = locked || state.testMode;
   const prediction = match.predictions[user.id] ?? { a: "", b: "" };
   const row = document.createElement("div");
@@ -472,9 +473,9 @@ function renderPredictions(container, match) {
   const dash = document.createElement("b");
   const inputB = scoreInput(prediction.b);
   dash.textContent = "-";
-  inputA.disabled = locked;
-  inputB.disabled = locked;
-  if (locked) {
+  inputA.disabled = inputsLocked;
+  inputB.disabled = inputsLocked;
+  if (inputsLocked) {
     row.classList.add("is-locked");
     inputA.title = "Prono verrouillé après le début du match";
     inputB.title = "Prono verrouillé après le début du match";
@@ -487,7 +488,7 @@ function renderPredictions(container, match) {
   points.className = "prediction-points";
   points.innerHTML = `<strong>${pointsFor(match, user.id)}</strong> pts`;
 
-  if (locked) {
+  if (inputsLocked) {
     const lock = document.createElement("span");
     lock.className = "lock-label";
     lock.textContent = "Verrouillé";
@@ -643,7 +644,7 @@ function pointsFor(match, userId) {
 function updatePrediction(matchId, userId, side, value) {
   const match = state.matches.find((item) => item.id === matchId);
   if (!match) return;
-  if (isMatchLocked(match)) {
+  if (isMatchLocked(match) && !state.testMode) {
     alert("Les pronostics sont verrouillés après le début du match.");
     render();
     return;
@@ -686,6 +687,10 @@ function applyTestMode() {
   ];
 
   matches.forEach((match, index) => {
+    if (String(match.externalId ?? "").startsWith("test-")) {
+      const testDate = new Date(Date.now() + (index + 1) * 60 * 60 * 1000);
+      match.date = testDate.toISOString();
+    }
     match.result = fakeScores[index];
     match.status = "TEST";
   });
@@ -697,7 +702,7 @@ function applyTestMode() {
 }
 
 function createTestMatches() {
-  const kickoff = new Date();
+  const kickoff = new Date(Date.now() + 60 * 60 * 1000);
   const teams = [
     ["Arsenal", "Liverpool"],
     ["Chelsea", "Manchester United"],
