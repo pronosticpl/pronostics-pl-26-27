@@ -1113,7 +1113,7 @@ async function saveRemoteState() {
     if (!response.ok) return;
     const payload = await response.json();
     if (!payload.state) return;
-    state = migrateState(payload.state);
+    state = mergeClientStates(state, migrateState(payload.state));
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
   } catch (error) {
@@ -1135,7 +1135,7 @@ async function loadRemoteState() {
     }
     const wasTesting = state.testMode || localStorage.getItem(testModeStorageKey) === "true";
     const testMatches = state.matches.filter((match) => match.status === "TEST");
-    state = migrateState(payload.state);
+    state = mergeClientStates(state, migrateState(payload.state));
     if (wasTesting) {
       state.testMode = true;
       const existingIds = new Set(state.matches.map((match) => match.externalId || match.id));
@@ -1165,6 +1165,56 @@ function stateForRemote() {
   const copy = structuredClone(state);
   delete copy.currentUserId;
   return copy;
+}
+
+function mergeClientStates(localState, remoteState) {
+  return {
+    ...remoteState,
+    ...localState,
+    users: mergeClientUsers(remoteState.users, localState.users),
+    matches: mergeClientMatches(remoteState.matches, localState.matches),
+    seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus),
+  };
+}
+
+function mergeClientUsers(remoteUsers = [], localUsers = []) {
+  const users = new Map();
+  [...remoteUsers, ...localUsers].forEach((user) => {
+    if (!user?.id) return;
+    users.set(user.id, { ...(users.get(user.id) || {}), ...user });
+  });
+  return [...users.values()];
+}
+
+function mergeClientMatches(remoteMatches = [], localMatches = []) {
+  const matches = new Map();
+  [...remoteMatches, ...localMatches].forEach((match) => {
+    const key = match?.externalId || match?.id;
+    if (!key) return;
+    const previous = matches.get(key) || {};
+    matches.set(key, {
+      ...previous,
+      ...match,
+      predictions: {
+        ...(previous.predictions || {}),
+        ...(match.predictions || {}),
+      },
+    });
+  });
+  return [...matches.values()];
+}
+
+function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}) {
+  return {
+    official: {
+      ...(remoteBonus.official || {}),
+      ...(localBonus.official || {}),
+    },
+    predictions: {
+      ...(remoteBonus.predictions || {}),
+      ...(localBonus.predictions || {}),
+    },
+  };
 }
 
 function loadState() {
