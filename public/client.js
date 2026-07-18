@@ -1332,7 +1332,7 @@ async function errorLabel(response) {
   try {
     const payload = await response.json();
     const detail = payload.detail ? ` · ${payload.detail}` : "";
-    return shorten(`Erreur ${response.status}: ${payload.error || "synchro"}${detail}`, 120);
+    return shorten(`Erreur ${response.status}: ${payload.error || "synchro"}${detail}`, 260);
   } catch {
     return `Erreur ${response.status}: synchro`;
   }
