@@ -775,7 +775,7 @@ function bonusByUser() {
 }
 
 function leaderboardDays() {
-  return [...new Set(state.matches.map((match) => match.matchday).filter(Boolean))].sort((a, b) => b - a);
+  return [...new Set(state.matches.map((match) => match.matchday).filter(Boolean))].sort((a, b) => a - b);
 }
 
 function matchdayDetailFor(userId, day) {
