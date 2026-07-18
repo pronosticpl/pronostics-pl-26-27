@@ -604,10 +604,34 @@ function renderLeaderboard() {
 
   rows.forEach((user) => {
     const item = document.createElement("li");
-    item.innerHTML = `<span class="leader-name"></span><strong>${user.points} pts</strong>`;
+    item.innerHTML = `
+      <div class="leader-main">
+        <span class="leader-name"></span>
+        <strong>${user.points} pts</strong>
+      </div>
+      <div class="leader-details"></div>
+    `;
     item.querySelector(".leader-name").textContent = user.name;
+    item.querySelector(".leader-details").append(renderLeaderDetails(user.id));
     els.leaderboard.append(item);
   });
+}
+
+function renderLeaderDetails(userId) {
+  const box = document.createElement("div");
+  box.className = "leader-detail-grid";
+
+  matchdayDetailsFor(userId).forEach((detail) => {
+    const line = document.createElement("span");
+    line.textContent = `J${detail.day}: ${detail.points} pts${detail.winner ? " + vainqueur" : ""}`;
+    box.append(line);
+  });
+
+  const bonus = seasonBonusDetailsFor(userId);
+  const bonusLine = document.createElement("span");
+  bonusLine.textContent = bonus.available ? `Bonus saison: ${bonus.points} pts` : "Bonus saison: en attente";
+  box.append(bonusLine);
+  return box;
 }
 
 function renderHeaderStats() {
@@ -653,6 +677,22 @@ function bonusByUser() {
     });
   });
   return bonus;
+}
+
+function matchdayDetailsFor(userId) {
+  const days = [...new Set(state.matches.map((match) => match.matchday).filter(Boolean))].sort((a, b) => a - b);
+  return days.map((day) => {
+    const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
+    const points = matches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
+    const allScores = state.users.map((user) => matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0));
+    const best = allScores.length ? Math.max(...allScores) : 0;
+    return { day, points, winner: best > 0 && points === best };
+  }).filter((detail) => detail.points > 0 || detail.winner);
+}
+
+function seasonBonusDetailsFor(userId) {
+  const available = seasonBonusCategories.some((category) => Boolean(state.seasonBonus.official[category.id]));
+  return { available, points: seasonBonusPointsFor(userId) };
 }
 
 function seasonBonusPointsFor(userId) {
