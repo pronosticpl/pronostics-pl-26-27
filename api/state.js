@@ -119,25 +119,36 @@ function parseStoredValue(value) {
 
 function mergeStates(stored, incoming) {
   if (!stored || typeof stored !== "object") return incoming;
+  const userMerge = mergeUsers(stored.users, incoming.users);
   return {
     ...stored,
     ...incoming,
-    users: mergeUsers(stored.users, incoming.users),
-    matches: mergeMatches(stored.matches, incoming.matches),
-    seasonBonus: mergeSeasonBonus(stored.seasonBonus, incoming.seasonBonus),
+    users: userMerge.users,
+    matches: mergeMatches(stored.matches, incoming.matches, userMerge.aliases),
+    seasonBonus: mergeSeasonBonus(stored.seasonBonus, incoming.seasonBonus, userMerge.aliases),
   };
 }
 
 function mergeUsers(storedUsers = [], incomingUsers = []) {
-  const users = new Map();
+  const usersById = new Map();
+  const idByName = new Map();
+  const aliases = {};
   [...storedUsers, ...incomingUsers].forEach((user) => {
     if (!user?.id) return;
-    users.set(user.id, { ...(users.get(user.id) || {}), ...user });
+    const nameKey = normalizeName(user.name);
+    const canonicalId = nameKey ? idByName.get(nameKey) : null;
+    if (canonicalId) {
+      aliases[user.id] = canonicalId;
+      usersById.set(canonicalId, { ...(usersById.get(canonicalId) || {}), ...user, id: canonicalId });
+      return;
+    }
+    if (nameKey) idByName.set(nameKey, user.id);
+    usersById.set(user.id, { ...(usersById.get(user.id) || {}), ...user });
   });
-  return [...users.values()];
+  return { users: [...usersById.values()], aliases };
 }
 
-function mergeMatches(storedMatches = [], incomingMatches = []) {
+function mergeMatches(storedMatches = [], incomingMatches = [], aliases = {}) {
   const matches = new Map();
   [...storedMatches, ...incomingMatches].forEach((match) => {
     const key = match?.externalId || match?.id;
@@ -146,35 +157,55 @@ function mergeMatches(storedMatches = [], incomingMatches = []) {
     matches.set(key, {
       ...previous,
       ...match,
-      predictions: mergePredictions(previous.predictions, match.predictions),
+      predictions: mergePredictions(previous.predictions, match.predictions, aliases),
     });
   });
   return [...matches.values()];
 }
 
-function mergePredictions(previousPredictions = {}, nextPredictions = {}) {
-  const predictions = { ...previousPredictions };
-  Object.entries(nextPredictions).forEach(([userId, prediction]) => {
-    const previous = predictions[userId] || {};
-    predictions[userId] = {
+function mergePredictions(previousPredictions = {}, nextPredictions = {}, aliases = {}) {
+  const predictions = {};
+  [previousPredictions, nextPredictions].forEach((source) => {
+    Object.entries(source || {}).forEach(([userId, prediction]) => {
+      addPrediction(predictions, userId, prediction, aliases);
+    });
+  });
+  return predictions;
+}
+
+function addPrediction(predictions, userId, prediction, aliases = {}) {
+    const canonicalId = aliases[userId] || userId;
+    const previous = predictions[canonicalId] || predictions[userId] || {};
+    predictions[canonicalId] = {
       ...previous,
       ...prediction,
       a: prediction?.a !== "" && prediction?.a !== undefined ? prediction.a : previous.a ?? "",
       b: prediction?.b !== "" && prediction?.b !== undefined ? prediction.b : previous.b ?? "",
     };
-  });
-  return predictions;
+    if (canonicalId !== userId) delete predictions[userId];
 }
 
-function mergeSeasonBonus(storedBonus = {}, incomingBonus = {}) {
+function mergeSeasonBonus(storedBonus = {}, incomingBonus = {}, aliases = {}) {
   return {
     official: {
       ...(storedBonus.official || {}),
       ...(incomingBonus.official || {}),
     },
-    predictions: {
-      ...(storedBonus.predictions || {}),
-      ...(incomingBonus.predictions || {}),
-    },
+    predictions: mergeBonusPredictions(storedBonus.predictions, incomingBonus.predictions, aliases),
   };
+}
+
+function mergeBonusPredictions(storedPredictions = {}, incomingPredictions = {}, aliases = {}) {
+  const predictions = {};
+  [storedPredictions, incomingPredictions].forEach((source) => {
+    Object.entries(source || {}).forEach(([userId, bonus]) => {
+      const canonicalId = aliases[userId] || userId;
+      predictions[canonicalId] = { ...(predictions[canonicalId] || {}), ...bonus };
+    });
+  });
+  return predictions;
+}
+
+function normalizeName(name = "") {
+  return String(name).trim().toLocaleLowerCase("fr");
 }
