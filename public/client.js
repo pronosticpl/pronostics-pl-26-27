@@ -1187,6 +1187,9 @@ function startRemoteRefresh() {
   if (location.protocol === "file:" || remoteRefreshTimer) return;
   remoteRefreshTimer = setInterval(() => loadRemoteState(), 5000);
   window.addEventListener("focus", () => loadRemoteState(true));
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) loadRemoteState(true);
+  });
 }
 
 function isEditingField() {
