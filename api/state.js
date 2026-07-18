@@ -119,23 +119,29 @@ function parseStoredValue(value) {
 
 function mergeStates(stored, incoming) {
   if (!stored || typeof stored !== "object") return incoming;
-  const userMerge = mergeUsers(stored.users, incoming.users);
+  const deletedUsers = mergeDeletedUsers(stored.deletedUsers, incoming.deletedUsers);
+  const userMerge = mergeUsers(stored.users, incoming.users, deletedUsers);
   return {
     ...stored,
     ...incoming,
+    deletedUsers,
     users: userMerge.users,
-    matches: mergeMatches(stored.matches, incoming.matches, userMerge.aliases),
-    seasonBonus: mergeSeasonBonus(stored.seasonBonus, incoming.seasonBonus, userMerge.aliases),
+    matches: mergeMatches(stored.matches, incoming.matches, userMerge.aliases, deletedUsers),
+    seasonBonus: mergeSeasonBonus(stored.seasonBonus, incoming.seasonBonus, userMerge.aliases, deletedUsers),
   };
 }
 
-function mergeUsers(storedUsers = [], incomingUsers = []) {
+function mergeUsers(storedUsers = [], incomingUsers = [], deletedUsers = {}) {
   const usersById = new Map();
   const idByName = new Map();
   const aliases = {};
   [...storedUsers, ...incomingUsers].forEach((user) => {
     if (!user?.id) return;
     const nameKey = normalizeName(user.name);
+    if (isDeletedUser(user, deletedUsers)) {
+      aliases[user.id] = null;
+      return;
+    }
     const canonicalId = nameKey ? idByName.get(nameKey) : null;
     if (canonicalId) {
       aliases[user.id] = canonicalId;
@@ -148,7 +154,7 @@ function mergeUsers(storedUsers = [], incomingUsers = []) {
   return { users: [...usersById.values()], aliases };
 }
 
-function mergeMatches(storedMatches = [], incomingMatches = [], aliases = {}) {
+function mergeMatches(storedMatches = [], incomingMatches = [], aliases = {}, deletedUsers = {}) {
   const matches = new Map();
   [...storedMatches, ...incomingMatches].forEach((match) => {
     const key = match?.externalId || match?.id;
@@ -157,24 +163,26 @@ function mergeMatches(storedMatches = [], incomingMatches = [], aliases = {}) {
     matches.set(key, {
       ...previous,
       ...match,
-      predictions: mergePredictions(previous.predictions, match.predictions, aliases),
+      predictions: mergePredictions(previous.predictions, match.predictions, aliases, deletedUsers),
     });
   });
   return [...matches.values()];
 }
 
-function mergePredictions(previousPredictions = {}, nextPredictions = {}, aliases = {}) {
+function mergePredictions(previousPredictions = {}, nextPredictions = {}, aliases = {}, deletedUsers = {}) {
   const predictions = {};
   [previousPredictions, nextPredictions].forEach((source) => {
     Object.entries(source || {}).forEach(([userId, prediction]) => {
-      addPrediction(predictions, userId, prediction, aliases);
+      addPrediction(predictions, userId, prediction, aliases, deletedUsers);
     });
   });
   return predictions;
 }
 
-function addPrediction(predictions, userId, prediction, aliases = {}) {
+function addPrediction(predictions, userId, prediction, aliases = {}, deletedUsers = {}) {
+    if (aliases[userId] === null || deletedUsers?.ids?.[userId]) return;
     const canonicalId = aliases[userId] || userId;
+    if (deletedUsers?.ids?.[canonicalId]) return;
     const previous = predictions[canonicalId] || predictions[userId] || {};
     predictions[canonicalId] = {
       ...previous,
@@ -198,25 +206,57 @@ function newestPredictionValue(previous = {}, prediction = {}, side) {
   return nextTime >= previousTime ? nextValue : previousValue;
 }
 
-function mergeSeasonBonus(storedBonus = {}, incomingBonus = {}, aliases = {}) {
+function mergeSeasonBonus(storedBonus = {}, incomingBonus = {}, aliases = {}, deletedUsers = {}) {
   return {
     official: {
       ...(storedBonus.official || {}),
       ...(incomingBonus.official || {}),
     },
-    predictions: mergeBonusPredictions(storedBonus.predictions, incomingBonus.predictions, aliases),
+    predictions: mergeBonusPredictions(storedBonus.predictions, incomingBonus.predictions, aliases, deletedUsers),
   };
 }
 
-function mergeBonusPredictions(storedPredictions = {}, incomingPredictions = {}, aliases = {}) {
+function mergeBonusPredictions(storedPredictions = {}, incomingPredictions = {}, aliases = {}, deletedUsers = {}) {
   const predictions = {};
   [storedPredictions, incomingPredictions].forEach((source) => {
     Object.entries(source || {}).forEach(([userId, bonus]) => {
+      if (aliases[userId] === null || deletedUsers?.ids?.[userId]) return;
       const canonicalId = aliases[userId] || userId;
+      if (deletedUsers?.ids?.[canonicalId]) return;
       predictions[canonicalId] = { ...(predictions[canonicalId] || {}), ...bonus };
     });
   });
   return predictions;
+}
+
+function mergeDeletedUsers(storedDeleted = {}, incomingDeleted = {}) {
+  const stored = normalizeDeletedUsers(storedDeleted);
+  const incoming = normalizeDeletedUsers(incomingDeleted);
+  return {
+    ids: mergeTimestampMaps(stored.ids, incoming.ids),
+    names: mergeTimestampMaps(stored.names, incoming.names),
+  };
+}
+
+function normalizeDeletedUsers(deletedUsers = {}) {
+  return {
+    ids: { ...(deletedUsers.ids || {}) },
+    names: { ...(deletedUsers.names || {}) },
+  };
+}
+
+function mergeTimestampMaps(a = {}, b = {}) {
+  const result = { ...a };
+  Object.entries(b).forEach(([key, value]) => {
+    result[key] = Math.max(Number(result[key]) || 0, Number(value) || 0);
+  });
+  return result;
+}
+
+function isDeletedUser(user, deletedUsers = {}) {
+  const deletedByNameAt = Number(deletedUsers.names?.[normalizeName(user.name)]) || 0;
+  const createdAt = Number(user.createdAt) || 0;
+  return Boolean(deletedUsers.ids?.[user.id] || (deletedByNameAt && (!createdAt || createdAt <= deletedByNameAt)));
 }
 
 function normalizeName(name = "") {
