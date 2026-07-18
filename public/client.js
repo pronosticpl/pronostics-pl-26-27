@@ -1,6 +1,7 @@
 const storageKey = "novaprono-v2";
 const sessionUserStorageKey = "novaprono-current-user";
 const apiKeyStorageKey = "novaprono-football-data-key";
+const testModeStorageKey = "novaprono-test-mode";
 const competitionCode = "PL";
 const seasonYear = 2026;
 const adminName = "Norbert";
@@ -21,6 +22,7 @@ const defaultState = {
   currentUserId: null,
   matchdayFilter: "all",
   lastSync: null,
+  testMode: false,
 };
 
 let state = migrateState(loadState());
@@ -58,6 +60,7 @@ const els = {
   saveKeyBtn: document.querySelector("#saveKeyBtn"),
   importLeagueBtn: document.querySelector("#importLeagueBtn"),
   syncBtn: document.querySelector("#syncBtn"),
+  testModeBtn: document.querySelector("#testModeBtn"),
   syncStatus: document.querySelector("#syncStatus"),
   seasonBonusList: document.querySelector("#seasonBonusList"),
   seasonBonusTotal: document.querySelector("#seasonBonusTotal"),
@@ -159,10 +162,12 @@ els.saveKeyBtn.addEventListener("click", async () => {
 
 els.importLeagueBtn.addEventListener("click", () => syncPremierLeague());
 els.syncBtn.addEventListener("click", () => syncPremierLeague());
+els.testModeBtn.addEventListener("click", () => applyTestMode());
 
 els.resetBtn.addEventListener("click", () => {
   if (!requireAdmin()) return;
   if (!confirm("Tout effacer ?")) return;
+  localStorage.removeItem(testModeStorageKey);
   state = structuredClone(defaultState);
   persist();
 });
@@ -452,6 +457,7 @@ function renderPredictions(container, match) {
   }
 
   const locked = isMatchLocked(match);
+  const showPublicPredictions = locked || state.testMode;
   const prediction = match.predictions[user.id] ?? { a: "", b: "" };
   const row = document.createElement("div");
   row.className = "prediction-row";
@@ -491,7 +497,7 @@ function renderPredictions(container, match) {
   }
   container.append(row);
 
-  if (locked) {
+  if (showPublicPredictions) {
     container.append(renderPublicMatchPredictions(match));
   }
 }
@@ -624,10 +630,14 @@ function pointsFor(match, userId) {
   const sameOutcome = outcome(resultA, resultB) === outcome(predA, predB);
   const sameDiff = resultA - resultB === predA - predB;
 
-  if (exactScore) return 5;
-  if (sameDiff) return 4;
-  if (sameOutcome) return 3;
-  return 0;
+  if (exactScore) return 6;
+
+  let points = 0;
+  if (resultA === predA) points += 1;
+  if (resultB === predB) points += 1;
+  if (sameOutcome) points += 2;
+  if (sameDiff) points += 1;
+  return points;
 }
 
 function updatePrediction(matchId, userId, side, value) {
@@ -655,6 +665,64 @@ function removeMatch(matchId) {
   if (!requireAdmin()) return;
   state.matches = state.matches.filter((match) => match.id !== matchId);
   persist();
+}
+
+function applyTestMode() {
+  if (!requireAdmin()) return;
+  const firstDay = firstMatchday();
+  const matches = firstDay
+    ? sortedMatches().filter((match) => match.matchday === firstDay).slice(0, 3)
+    : createTestMatches();
+
+  if (matches.length === 0) {
+    alert("Aucun match de première journée à tester.");
+    return;
+  }
+
+  const fakeScores = [
+    { a: "2", b: "1" },
+    { a: "1", b: "1" },
+    { a: "0", b: "2" },
+  ];
+
+  matches.forEach((match, index) => {
+    match.result = fakeScores[index];
+    match.status = "TEST";
+  });
+
+  state.testMode = true;
+  localStorage.setItem(testModeStorageKey, "true");
+  setStatus("Mode test activé : pronos visibles et 3 résultats fictifs ajoutés.");
+  persist();
+}
+
+function createTestMatches() {
+  const kickoff = new Date();
+  const teams = [
+    ["Arsenal", "Liverpool"],
+    ["Chelsea", "Manchester United"],
+    ["Tottenham", "Manchester City"],
+  ];
+
+  const matches = teams.map(([teamA, teamB], index) => ({
+    id: crypto.randomUUID(),
+    externalId: `test-${index + 1}`,
+    teamA,
+    teamB,
+    date: new Date(kickoff.getTime() + index * 60 * 60 * 1000).toISOString(),
+    matchday: 1,
+    status: "TEST",
+    result: { a: "", b: "" },
+    predictions: {},
+  }));
+
+  state.matches.push(...matches);
+  return matches;
+}
+
+function firstMatchday() {
+  const days = state.matches.map((match) => match.matchday).filter((day) => day !== null && day !== undefined);
+  return days.length ? Math.min(...days) : null;
 }
 
 function upsertMatch(nextMatch) {
@@ -778,7 +846,9 @@ async function loadRemoteState() {
       await saveRemoteState();
       return;
     }
+    const wasTesting = state.testMode || localStorage.getItem(testModeStorageKey) === "true";
     state = migrateState(payload.state);
+    if (wasTesting) state.testMode = true;
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
   } catch (error) {
@@ -826,6 +896,7 @@ function migrateState(raw) {
   next.currentUserId = raw.currentUserId ?? null;
   next.matchdayFilter = raw.matchdayFilter ?? "all";
   next.lastSync = raw.lastSync ?? null;
+  next.testMode = Boolean(raw.testMode) || localStorage.getItem(testModeStorageKey) === "true";
   return next;
 }
 
