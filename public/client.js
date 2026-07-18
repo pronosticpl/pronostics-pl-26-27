@@ -765,8 +765,7 @@ function applyTestMode() {
     alert("Connecte-toi pour lancer le mode test.");
     return;
   }
-  state.matches = state.matches.filter((match) => match.status !== "TEST");
-  const matches = createTestMatches();
+  const matches = ensureTestMatches();
 
   if (matches.length === 0) {
     alert("Aucun match de première journée à tester.");
@@ -817,10 +816,18 @@ function applyTestSeasonBonus() {
   state.users.forEach((user, userIndex) => {
     state.seasonBonus.predictions[user.id] = state.seasonBonus.predictions[user.id] ?? {};
     seasonBonusCategories.forEach((category, categoryIndex) => {
-      state.seasonBonus.predictions[user.id][category.id] =
-        (userIndex + categoryIndex) % 2 === 0 ? official[category.id] : alternatives[category.id];
+      if (!state.seasonBonus.predictions[user.id][category.id]) {
+        state.seasonBonus.predictions[user.id][category.id] =
+          (userIndex + categoryIndex) % 2 === 0 ? official[category.id] : alternatives[category.id];
+      }
     });
   });
+}
+
+function ensureTestMatches() {
+  const existing = state.matches.filter((match) => match.status === "TEST");
+  if (existing.length > 0) return existing.slice(0, 3);
+  return createTestMatches();
 }
 
 function createTestMatches() {
