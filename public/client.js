@@ -874,6 +874,7 @@ function updatePrediction(matchId, userId, side, value) {
   }
   match.predictions[userId] = match.predictions[userId] ?? { a: "", b: "" };
   match.predictions[userId][side] = value;
+  match.predictions[userId][`${side}UpdatedAt`] = Date.now();
   persist();
 }
 
@@ -1259,10 +1260,22 @@ function addClientPrediction(predictions, userId, prediction, aliases = {}) {
     predictions[canonicalId] = {
       ...previous,
       ...prediction,
-      a: prediction?.a !== "" && prediction?.a !== undefined ? prediction.a : previous.a ?? "",
-      b: prediction?.b !== "" && prediction?.b !== undefined ? prediction.b : previous.b ?? "",
+      a: newestPredictionValue(previous, prediction, "a"),
+      b: newestPredictionValue(previous, prediction, "b"),
+      aUpdatedAt: Math.max(Number(previous.aUpdatedAt) || 0, Number(prediction?.aUpdatedAt) || 0),
+      bUpdatedAt: Math.max(Number(previous.bUpdatedAt) || 0, Number(prediction?.bUpdatedAt) || 0),
     };
     if (canonicalId !== userId) delete predictions[userId];
+}
+
+function newestPredictionValue(previous = {}, prediction = {}, side) {
+  const nextValue = prediction?.[side];
+  if (nextValue === "" || nextValue === undefined) return previous[side] ?? "";
+  const previousValue = previous?.[side];
+  if (previousValue === "" || previousValue === undefined) return nextValue;
+  const previousTime = Number(previous?.[`${side}UpdatedAt`]) || 0;
+  const nextTime = Number(prediction?.[`${side}UpdatedAt`]) || 0;
+  return nextTime >= previousTime ? nextValue : previousValue;
 }
 
 function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}, aliases = {}) {
