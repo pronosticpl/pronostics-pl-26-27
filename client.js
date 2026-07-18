@@ -1,6 +1,7 @@
 const storageKey = "novaprono-v2";
 const sessionUserStorageKey = "novaprono-current-user";
 const apiKeyStorageKey = "novaprono-football-data-key";
+const testModeStorageKey = "novaprono-test-mode";
 const competitionCode = "PL";
 const seasonYear = 2026;
 const adminName = "Norbert";
@@ -166,6 +167,7 @@ els.testModeBtn.addEventListener("click", () => applyTestMode());
 els.resetBtn.addEventListener("click", () => {
   if (!requireAdmin()) return;
   if (!confirm("Tout effacer ?")) return;
+  localStorage.removeItem(testModeStorageKey);
   state = structuredClone(defaultState);
   persist();
 });
@@ -689,6 +691,7 @@ function applyTestMode() {
   });
 
   state.testMode = true;
+  localStorage.setItem(testModeStorageKey, "true");
   setStatus("Mode test activé : pronos visibles et 3 résultats fictifs ajoutés.");
   persist();
 }
@@ -843,7 +846,9 @@ async function loadRemoteState() {
       await saveRemoteState();
       return;
     }
+    const wasTesting = state.testMode || localStorage.getItem(testModeStorageKey) === "true";
     state = migrateState(payload.state);
+    if (wasTesting) state.testMode = true;
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
   } catch (error) {
@@ -891,7 +896,7 @@ function migrateState(raw) {
   next.currentUserId = raw.currentUserId ?? null;
   next.matchdayFilter = raw.matchdayFilter ?? "all";
   next.lastSync = raw.lastSync ?? null;
-  next.testMode = Boolean(raw.testMode);
+  next.testMode = Boolean(raw.testMode) || localStorage.getItem(testModeStorageKey) === "true";
   return next;
 }
 
