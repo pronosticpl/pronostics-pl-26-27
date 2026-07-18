@@ -146,13 +146,24 @@ function mergeMatches(storedMatches = [], incomingMatches = []) {
     matches.set(key, {
       ...previous,
       ...match,
-      predictions: {
-        ...(previous.predictions || {}),
-        ...(match.predictions || {}),
-      },
+      predictions: mergePredictions(previous.predictions, match.predictions),
     });
   });
   return [...matches.values()];
+}
+
+function mergePredictions(previousPredictions = {}, nextPredictions = {}) {
+  const predictions = { ...previousPredictions };
+  Object.entries(nextPredictions).forEach(([userId, prediction]) => {
+    const previous = predictions[userId] || {};
+    predictions[userId] = {
+      ...previous,
+      ...prediction,
+      a: prediction?.a !== "" && prediction?.a !== undefined ? prediction.a : previous.a ?? "",
+      b: prediction?.b !== "" && prediction?.b !== undefined ? prediction.b : previous.b ?? "",
+    };
+  });
+  return predictions;
 }
 
 function mergeSeasonBonus(storedBonus = {}, incomingBonus = {}) {
