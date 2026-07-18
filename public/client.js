@@ -652,6 +652,10 @@ function updatePrediction(matchId, userId, side, value) {
   }
   match.predictions[userId] = match.predictions[userId] ?? { a: "", b: "" };
   match.predictions[userId][side] = value;
+  if (state.testMode && match.status === "TEST") {
+    persistLocalOnly();
+    return;
+  }
   persist();
 }
 
@@ -699,7 +703,7 @@ function applyTestMode() {
   state.testMode = true;
   localStorage.setItem(testModeStorageKey, "true");
   setStatus("Mode test activé : pronos visibles et 3 résultats fictifs ajoutés.");
-  persist();
+  persistLocalOnly();
 }
 
 function createTestMatches() {
@@ -824,6 +828,11 @@ function persist() {
   queueRemoteSave();
 }
 
+function persistLocalOnly() {
+  localStorage.setItem(storageKey, JSON.stringify(state));
+  render();
+}
+
 function queueRemoteSave() {
   if (location.protocol === "file:") return;
   clearTimeout(remoteSaveTimer);
@@ -853,8 +862,16 @@ async function loadRemoteState() {
       return;
     }
     const wasTesting = state.testMode || localStorage.getItem(testModeStorageKey) === "true";
+    const testMatches = state.matches.filter((match) => match.status === "TEST");
     state = migrateState(payload.state);
-    if (wasTesting) state.testMode = true;
+    if (wasTesting) {
+      state.testMode = true;
+      const existingIds = new Set(state.matches.map((match) => match.externalId || match.id));
+      testMatches.forEach((match) => {
+        const key = match.externalId || match.id;
+        if (!existingIds.has(key)) state.matches.push(match);
+      });
+    }
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
   } catch (error) {
