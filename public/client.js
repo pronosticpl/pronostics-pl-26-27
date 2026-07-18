@@ -875,6 +875,7 @@ function updatePrediction(matchId, userId, side, value) {
   match.predictions[userId] = match.predictions[userId] ?? { a: "", b: "" };
   match.predictions[userId][side] = value;
   match.predictions[userId][`${side}UpdatedAt`] = Date.now();
+  setRemoteStatus("Prono modifié...");
   persist();
 }
 
@@ -1275,6 +1276,7 @@ function newestPredictionValue(previous = {}, prediction = {}, side) {
   if (previousValue === "" || previousValue === undefined) return nextValue;
   const previousTime = Number(previous?.[`${side}UpdatedAt`]) || 0;
   const nextTime = Number(prediction?.[`${side}UpdatedAt`]) || 0;
+  if (!previousTime && !nextTime) return previousValue;
   return nextTime >= previousTime ? nextValue : previousValue;
 }
 
