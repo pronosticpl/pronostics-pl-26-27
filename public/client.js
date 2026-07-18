@@ -21,6 +21,7 @@ const defaultState = {
   users: [],
   matches: [],
   seasonBonus: { official: {}, predictions: {} },
+  deletedUsers: { ids: {}, names: {} },
   currentUserId: null,
   matchdayFilter: "all",
   lastSync: null,
@@ -142,7 +143,7 @@ els.signupForm.addEventListener("submit", (event) => {
     alert("Ce pseudo existe déjà.");
     return;
   }
-  const user = { id: crypto.randomUUID(), name, pin };
+  const user = { id: crypto.randomUUID(), name, pin, createdAt: Date.now() };
   state.users.push(user);
   setCurrentUser(user.id);
   els.signupForm.reset();
@@ -881,6 +882,9 @@ function updatePrediction(matchId, userId, side, value) {
 }
 
 function removeUser(userId) {
+  if (!requireAdmin()) return;
+  const user = state.users.find((item) => item.id === userId);
+  markDeletedUser(user);
   state.users = state.users.filter((user) => user.id !== userId);
   state.matches.forEach((match) => delete match.predictions[userId]);
   delete state.seasonBonus.predictions[userId];
@@ -1204,24 +1208,31 @@ function stateForRemote() {
 }
 
 function mergeClientStates(localState, remoteState) {
-  const userMerge = mergeClientUsers(remoteState.users, localState.users);
+  const deletedUsers = mergeClientDeletedUsers(remoteState.deletedUsers, localState.deletedUsers);
+  const userMerge = mergeClientUsers(remoteState.users, localState.users, deletedUsers);
   if (currentUserId && userMerge.aliases[currentUserId]) setCurrentUser(userMerge.aliases[currentUserId]);
+  if (currentUserId && userMerge.aliases[currentUserId] === null) setCurrentUser(null);
   return {
     ...remoteState,
     ...localState,
+    deletedUsers,
     users: userMerge.users,
-    matches: mergeClientMatches(remoteState.matches, localState.matches, userMerge.aliases),
-    seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus, userMerge.aliases),
+    matches: mergeClientMatches(remoteState.matches, localState.matches, userMerge.aliases, deletedUsers),
+    seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus, userMerge.aliases, deletedUsers),
   };
 }
 
-function mergeClientUsers(remoteUsers = [], localUsers = []) {
+function mergeClientUsers(remoteUsers = [], localUsers = [], deletedUsers = {}) {
   const usersById = new Map();
   const idByName = new Map();
   const aliases = {};
   [...remoteUsers, ...localUsers].forEach((user) => {
     if (!user?.id) return;
     const nameKey = normalizeName(user.name);
+    if (isDeletedUser(user, deletedUsers)) {
+      aliases[user.id] = null;
+      return;
+    }
     const canonicalId = nameKey ? idByName.get(nameKey) : null;
     if (canonicalId) {
       aliases[user.id] = canonicalId;
@@ -1234,7 +1245,7 @@ function mergeClientUsers(remoteUsers = [], localUsers = []) {
   return { users: [...usersById.values()], aliases };
 }
 
-function mergeClientMatches(remoteMatches = [], localMatches = [], aliases = {}) {
+function mergeClientMatches(remoteMatches = [], localMatches = [], aliases = {}, deletedUsers = {}) {
   const matches = new Map();
   [...remoteMatches, ...localMatches].forEach((match) => {
     const key = match?.externalId || match?.id;
@@ -1243,24 +1254,26 @@ function mergeClientMatches(remoteMatches = [], localMatches = [], aliases = {})
     matches.set(key, {
       ...previous,
       ...match,
-      predictions: mergeClientPredictions(previous.predictions, match.predictions, aliases),
+      predictions: mergeClientPredictions(previous.predictions, match.predictions, aliases, deletedUsers),
     });
   });
   return [...matches.values()];
 }
 
-function mergeClientPredictions(previousPredictions = {}, nextPredictions = {}, aliases = {}) {
+function mergeClientPredictions(previousPredictions = {}, nextPredictions = {}, aliases = {}, deletedUsers = {}) {
   const predictions = {};
   [previousPredictions, nextPredictions].forEach((source) => {
     Object.entries(source || {}).forEach(([userId, prediction]) => {
-      addClientPrediction(predictions, userId, prediction, aliases);
+      addClientPrediction(predictions, userId, prediction, aliases, deletedUsers);
     });
   });
   return predictions;
 }
 
-function addClientPrediction(predictions, userId, prediction, aliases = {}) {
+function addClientPrediction(predictions, userId, prediction, aliases = {}, deletedUsers = {}) {
+    if (aliases[userId] === null || deletedUsers?.ids?.[userId]) return;
     const canonicalId = aliases[userId] || userId;
+    if (deletedUsers?.ids?.[canonicalId]) return;
     const previous = predictions[canonicalId] || predictions[userId] || {};
     predictions[canonicalId] = {
       ...previous,
@@ -1284,25 +1297,65 @@ function newestPredictionValue(previous = {}, prediction = {}, side) {
   return nextTime >= previousTime ? nextValue : previousValue;
 }
 
-function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}, aliases = {}) {
+function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}, aliases = {}, deletedUsers = {}) {
   return {
     official: {
       ...(remoteBonus.official || {}),
       ...(localBonus.official || {}),
     },
-    predictions: mergeClientBonusPredictions(remoteBonus.predictions, localBonus.predictions, aliases),
+    predictions: mergeClientBonusPredictions(remoteBonus.predictions, localBonus.predictions, aliases, deletedUsers),
   };
 }
 
-function mergeClientBonusPredictions(remotePredictions = {}, localPredictions = {}, aliases = {}) {
+function mergeClientBonusPredictions(remotePredictions = {}, localPredictions = {}, aliases = {}, deletedUsers = {}) {
   const predictions = {};
   [remotePredictions, localPredictions].forEach((source) => {
     Object.entries(source || {}).forEach(([userId, bonus]) => {
+      if (aliases[userId] === null || deletedUsers?.ids?.[userId]) return;
       const canonicalId = aliases[userId] || userId;
+      if (deletedUsers?.ids?.[canonicalId]) return;
       predictions[canonicalId] = { ...(predictions[canonicalId] || {}), ...bonus };
     });
   });
   return predictions;
+}
+
+function markDeletedUser(user) {
+  if (!user?.id) return;
+  state.deletedUsers = normalizeDeletedUsers(state.deletedUsers);
+  state.deletedUsers.ids[user.id] = Date.now();
+  const nameKey = normalizeName(user.name);
+  if (nameKey) state.deletedUsers.names[nameKey] = Date.now();
+}
+
+function mergeClientDeletedUsers(remoteDeleted = {}, localDeleted = {}) {
+  const remote = normalizeDeletedUsers(remoteDeleted);
+  const local = normalizeDeletedUsers(localDeleted);
+  return {
+    ids: mergeTimestampMaps(remote.ids, local.ids),
+    names: mergeTimestampMaps(remote.names, local.names),
+  };
+}
+
+function normalizeDeletedUsers(deletedUsers = {}) {
+  return {
+    ids: { ...(deletedUsers.ids || {}) },
+    names: { ...(deletedUsers.names || {}) },
+  };
+}
+
+function mergeTimestampMaps(a = {}, b = {}) {
+  const result = { ...a };
+  Object.entries(b).forEach(([key, value]) => {
+    result[key] = Math.max(Number(result[key]) || 0, Number(value) || 0);
+  });
+  return result;
+}
+
+function isDeletedUser(user, deletedUsers = {}) {
+  const deletedByNameAt = Number(deletedUsers.names?.[normalizeName(user.name)]) || 0;
+  const createdAt = Number(user.createdAt) || 0;
+  return Boolean(deletedUsers.ids?.[user.id] || (deletedByNameAt && (!createdAt || createdAt <= deletedByNameAt)));
 }
 
 function normalizeName(name = "") {
@@ -1340,6 +1393,7 @@ function migrateState(raw) {
     official: raw.seasonBonus?.official ?? {},
     predictions: raw.seasonBonus?.predictions ?? {},
   };
+  next.deletedUsers = normalizeDeletedUsers(raw.deletedUsers);
   next.currentUserId = raw.currentUserId ?? null;
   next.matchdayFilter = raw.matchdayFilter ?? "all";
   next.lastSync = raw.lastSync ?? null;
