@@ -1331,10 +1331,15 @@ function setRemoteStatus(message) {
 async function errorLabel(response) {
   try {
     const payload = await response.json();
-    return `Erreur ${response.status}: ${payload.error || "synchro"}`;
+    const detail = payload.detail ? ` · ${payload.detail}` : "";
+    return shorten(`Erreur ${response.status}: ${payload.error || "synchro"}${detail}`, 120);
   } catch {
     return `Erreur ${response.status}: synchro`;
   }
+}
+
+function shorten(text, maxLength) {
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
 }
 
 render();
