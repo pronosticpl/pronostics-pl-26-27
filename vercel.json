@@ -9,6 +9,8 @@
     { "src": "/api/state", "dest": "/api/state.js" },
     { "src": "/api/key", "dest": "/api/key.js" },
     { "src": "/assets/(.*)", "dest": "/public/assets/$1" },
+    { "src": "/manifest.webmanifest", "dest": "/public/manifest.webmanifest" },
+    { "src": "/service-worker.js", "dest": "/public/service-worker.js" },
     { "src": "/client.js", "dest": "/public/client.js" },
     { "src": "/styles.css", "dest": "/public/styles.css" },
     { "src": "/favicon.ico", "dest": "/public/index.html" },
