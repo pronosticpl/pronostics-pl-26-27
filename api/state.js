@@ -1,4 +1,4 @@
-const { hasSupabaseConfig, sendJson, supabaseRequest } = require("./_supabase");
+const { hasSupabaseConfig, sendJson, supabaseConfigInfo, supabaseRequest } = require("./_supabase");
 
 module.exports = async function handler(request, response) {
   response.setHeader("Cache-Control", "no-store, max-age=0");
@@ -25,7 +25,7 @@ async function readRemoteState(response) {
   try {
     sendJson(response, 200, { state: await readStoredState() });
   } catch (error) {
-    sendJson(response, 502, { error: "Impossible de lire Supabase.", detail: error.message });
+    sendJson(response, 502, { error: "Impossible de lire Supabase.", detail: `${error.message} | ${configLabel()}` });
   }
 }
 
@@ -44,8 +44,13 @@ async function writeRemoteState(request, response) {
     await upsertState(state);
     sendJson(response, 200, { ok: true, state });
   } catch (error) {
-    sendJson(response, 400, { error: "Impossible de sauvegarder l'état.", detail: error.message });
+    sendJson(response, 400, { error: "Impossible de sauvegarder l'état.", detail: `${error.message} | ${configLabel()}` });
   }
+}
+
+function configLabel() {
+  const info = supabaseConfigInfo();
+  return `host=${info.host}, key=${info.keyType}, len=${info.keyLength}, service=${info.hasServiceRole}, secret=${info.hasSecretKey}, json=${info.hasSecretKeysJson}`;
 }
 
 async function upsertState(state) {
