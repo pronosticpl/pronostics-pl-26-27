@@ -1118,7 +1118,7 @@ async function saveRemoteState() {
       body: JSON.stringify({ state: stateForRemote() }),
     });
     if (!response.ok) {
-      setRemoteStatus("Erreur synchro");
+      setRemoteStatus(await errorLabel(response));
       return;
     }
     const payload = await response.json();
@@ -1144,7 +1144,7 @@ async function loadRemoteState(force = false) {
     setRemoteStatus("Lecture...");
     const response = await fetch(`/api/state?ts=${Date.now()}`, { cache: "no-store" });
     if (!response.ok) {
-      setRemoteStatus("Erreur synchro");
+      setRemoteStatus(await errorLabel(response));
       return;
     }
     const payload = await response.json();
@@ -1326,6 +1326,15 @@ function setStatus(message) {
 
 function setRemoteStatus(message) {
   if (els.remoteStatus) els.remoteStatus.textContent = message;
+}
+
+async function errorLabel(response) {
+  try {
+    const payload = await response.json();
+    return `Erreur ${response.status}: ${payload.error || "synchro"}`;
+  } catch {
+    return `Erreur ${response.status}: synchro`;
+  }
 }
 
 render();
