@@ -141,7 +141,7 @@ els.seasonBonusList.addEventListener("change", (event) => {
     if (!isAdmin()) return;
     state.seasonBonus.official[input.dataset.bonusId] = clean(input.value);
   } else {
-    if (isSeasonLocked()) {
+    if (isSeasonLocked() && !state.testMode) {
       alert("Les bonus saison sont verrouillés après le début du championnat.");
       render();
       return;
@@ -688,7 +688,10 @@ function removeMatch(matchId) {
 }
 
 function applyTestMode() {
-  if (!requireAdmin()) return;
+  if (!currentUser()) {
+    alert("Connecte-toi pour lancer le mode test.");
+    return;
+  }
   state.matches = state.matches.filter((match) => match.status !== "TEST");
   const matches = createTestMatches();
 
@@ -712,10 +715,39 @@ function applyTestMode() {
     match.status = "TEST";
   });
 
+  applyTestSeasonBonus();
   state.testMode = true;
   localStorage.setItem(testModeStorageKey, "true");
-  setStatus("Mode test activé : pronos visibles et 3 résultats fictifs ajoutés.");
+  setStatus("Mode test activé : matchs et bonus fictifs ajoutés.");
   persistLocalOnly();
+}
+
+function applyTestSeasonBonus() {
+  const official = {
+    champion: "Arsenal",
+    bestAttack: "Manchester City",
+    bestDefense: "Liverpool",
+    goldenGloves: "Alisson",
+    topScorer: "Erling Haaland",
+    bestPlayer: "Bukayo Saka",
+  };
+  const alternatives = {
+    champion: "Liverpool",
+    bestAttack: "Arsenal",
+    bestDefense: "Chelsea",
+    goldenGloves: "David Raya",
+    topScorer: "Mohamed Salah",
+    bestPlayer: "Cole Palmer",
+  };
+
+  state.seasonBonus.official = { ...state.seasonBonus.official, ...official };
+  state.users.forEach((user, userIndex) => {
+    state.seasonBonus.predictions[user.id] = state.seasonBonus.predictions[user.id] ?? {};
+    seasonBonusCategories.forEach((category, categoryIndex) => {
+      state.seasonBonus.predictions[user.id][category.id] =
+        (userIndex + categoryIndex) % 2 === 0 ? official[category.id] : alternatives[category.id];
+    });
+  });
 }
 
 function createTestMatches() {
