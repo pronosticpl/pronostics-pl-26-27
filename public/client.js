@@ -1198,25 +1198,37 @@ function stateForRemote() {
 }
 
 function mergeClientStates(localState, remoteState) {
+  const userMerge = mergeClientUsers(remoteState.users, localState.users);
+  if (currentUserId && userMerge.aliases[currentUserId]) setCurrentUser(userMerge.aliases[currentUserId]);
   return {
     ...remoteState,
     ...localState,
-    users: mergeClientUsers(remoteState.users, localState.users),
-    matches: mergeClientMatches(remoteState.matches, localState.matches),
-    seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus),
+    users: userMerge.users,
+    matches: mergeClientMatches(remoteState.matches, localState.matches, userMerge.aliases),
+    seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus, userMerge.aliases),
   };
 }
 
 function mergeClientUsers(remoteUsers = [], localUsers = []) {
-  const users = new Map();
+  const usersById = new Map();
+  const idByName = new Map();
+  const aliases = {};
   [...remoteUsers, ...localUsers].forEach((user) => {
     if (!user?.id) return;
-    users.set(user.id, { ...(users.get(user.id) || {}), ...user });
+    const nameKey = normalizeName(user.name);
+    const canonicalId = nameKey ? idByName.get(nameKey) : null;
+    if (canonicalId) {
+      aliases[user.id] = canonicalId;
+      usersById.set(canonicalId, { ...(usersById.get(canonicalId) || {}), ...user, id: canonicalId });
+      return;
+    }
+    if (nameKey) idByName.set(nameKey, user.id);
+    usersById.set(user.id, { ...(usersById.get(user.id) || {}), ...user });
   });
-  return [...users.values()];
+  return { users: [...usersById.values()], aliases };
 }
 
-function mergeClientMatches(remoteMatches = [], localMatches = []) {
+function mergeClientMatches(remoteMatches = [], localMatches = [], aliases = {}) {
   const matches = new Map();
   [...remoteMatches, ...localMatches].forEach((match) => {
     const key = match?.externalId || match?.id;
@@ -1225,37 +1237,57 @@ function mergeClientMatches(remoteMatches = [], localMatches = []) {
     matches.set(key, {
       ...previous,
       ...match,
-      predictions: mergeClientPredictions(previous.predictions, match.predictions),
+      predictions: mergeClientPredictions(previous.predictions, match.predictions, aliases),
     });
   });
   return [...matches.values()];
 }
 
-function mergeClientPredictions(previousPredictions = {}, nextPredictions = {}) {
-  const predictions = { ...previousPredictions };
-  Object.entries(nextPredictions).forEach(([userId, prediction]) => {
-    const previous = predictions[userId] || {};
-    predictions[userId] = {
+function mergeClientPredictions(previousPredictions = {}, nextPredictions = {}, aliases = {}) {
+  const predictions = {};
+  [previousPredictions, nextPredictions].forEach((source) => {
+    Object.entries(source || {}).forEach(([userId, prediction]) => {
+      addClientPrediction(predictions, userId, prediction, aliases);
+    });
+  });
+  return predictions;
+}
+
+function addClientPrediction(predictions, userId, prediction, aliases = {}) {
+    const canonicalId = aliases[userId] || userId;
+    const previous = predictions[canonicalId] || predictions[userId] || {};
+    predictions[canonicalId] = {
       ...previous,
       ...prediction,
       a: prediction?.a !== "" && prediction?.a !== undefined ? prediction.a : previous.a ?? "",
       b: prediction?.b !== "" && prediction?.b !== undefined ? prediction.b : previous.b ?? "",
     };
-  });
-  return predictions;
+    if (canonicalId !== userId) delete predictions[userId];
 }
 
-function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}) {
+function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}, aliases = {}) {
   return {
     official: {
       ...(remoteBonus.official || {}),
       ...(localBonus.official || {}),
     },
-    predictions: {
-      ...(remoteBonus.predictions || {}),
-      ...(localBonus.predictions || {}),
-    },
+    predictions: mergeClientBonusPredictions(remoteBonus.predictions, localBonus.predictions, aliases),
   };
+}
+
+function mergeClientBonusPredictions(remotePredictions = {}, localPredictions = {}, aliases = {}) {
+  const predictions = {};
+  [remotePredictions, localPredictions].forEach((source) => {
+    Object.entries(source || {}).forEach(([userId, bonus]) => {
+      const canonicalId = aliases[userId] || userId;
+      predictions[canonicalId] = { ...(predictions[canonicalId] || {}), ...bonus };
+    });
+  });
+  return predictions;
+}
+
+function normalizeName(name = "") {
+  return String(name).trim().toLocaleLowerCase("fr");
 }
 
 function loadState() {
