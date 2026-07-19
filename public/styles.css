@@ -597,7 +597,7 @@ form button {
 }
 
 .points-detail-table {
-  min-width: 500px;
+  min-width: 460px;
   margin-top: 0;
 }
 
@@ -606,7 +606,7 @@ form button {
 }
 
 .standings-table {
-  min-width: 760px;
+  min-width: 650px;
 }
 
 .rules {
@@ -795,7 +795,7 @@ form button {
 }
 
 .stats-table {
-  min-width: 620px;
+  min-width: 560px;
 }
 
 .public-bonus {
@@ -1159,20 +1159,37 @@ form button {
 
   .leader-table {
     min-width: 520px;
+    border-spacing: 0 5px;
+    font-size: 0.72rem;
+  }
+
+  .leader-table th {
+    padding: 0 5px 3px;
+    font-size: 0.58rem;
+    line-height: 1.05;
+  }
+
+  .leader-table td {
+    padding: 7px 5px;
   }
 
   .leader-player {
-    width: 82px;
-    min-width: 82px;
-    max-width: 82px;
+    width: 76px;
+    min-width: 76px;
+    max-width: 76px;
+    font-size: 0.72rem;
   }
 
   .leader-player .rank-badge {
-    width: 20px;
-    height: 20px;
-    margin-right: 4px;
-    border-radius: 7px;
-    font-size: 0.68rem;
+    width: 18px;
+    height: 18px;
+    margin-right: 3px;
+    border-radius: 6px;
+    font-size: 0.6rem;
+  }
+
+  .leader-total strong {
+    font-size: 0.8rem;
   }
 
   .match-head,
