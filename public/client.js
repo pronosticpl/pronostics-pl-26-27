@@ -1905,10 +1905,14 @@ function renderPlayerStats() {
 
 function leaderboardTotalHtml(stats) {
   const dayWinBonus = stats.dayWins * 3;
-  const penalty = stats.penaltyPoints ? ` - ${stats.penaltyPoints}` : "";
   return `
     <strong>${stats.total} pts</strong>
-    <span class="leader-breakdown">Matchs ${stats.matchPoints} + VJ ${dayWinBonus} + Bonus ${stats.seasonBonus}${penalty}</span>
+    <span class="leader-breakdown">
+      <small>Matchs ${stats.matchPoints}</small>
+      <small>VJ ${dayWinBonus}</small>
+      <small>Bonus ${stats.seasonBonus}</small>
+      <small>Pén. -${stats.penaltyPoints}</small>
+    </span>
   `;
 }
 

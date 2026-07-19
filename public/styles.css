@@ -562,13 +562,25 @@ form button {
 }
 
 .leader-breakdown {
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 3px 5px;
   max-width: 170px;
   margin-left: auto;
   color: var(--muted);
   font-size: 0.72rem;
   line-height: 1.25;
-  white-space: normal;
+}
+
+.leader-breakdown small {
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: rgba(31, 90, 58, 0.07);
+  font-size: 0.68rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .leader-table td > span:not(.avatar):not(.rank-badge):not(.card-badges):not(.leader-breakdown) {
