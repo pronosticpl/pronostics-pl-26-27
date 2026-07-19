@@ -445,6 +445,7 @@ function renderSession() {
 function renderSeasonBonus() {
   const user = currentUser();
   const locked = isSeasonLocked();
+  const predictionLocked = locked && !state.testMode;
   els.seasonBonusList.innerHTML = "";
   els.seasonBonusTotal.textContent = user ? `${seasonBonusPointsFor(user.id)} pts` : "0";
 
@@ -475,8 +476,8 @@ function renderSeasonBonus() {
 
     const predictionInput = row.querySelector('[data-role="prediction"]');
     predictionInput.value = userBonus[category.id] ?? "";
-    predictionInput.disabled = locked;
-    predictionInput.title = locked ? "Bonus verrouillé après le début du championnat" : "";
+    predictionInput.disabled = predictionLocked;
+    predictionInput.title = predictionLocked ? "Bonus verrouillé après le début du championnat" : "";
     const officialLabel = row.querySelector(".admin-only");
     const officialInput = row.querySelector('[data-role="official"]');
     officialLabel.hidden = false;
