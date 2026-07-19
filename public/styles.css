@@ -527,17 +527,6 @@ form button {
   border-radius: 0 8px 8px 0;
 }
 
-.leader-detail-row td {
-  padding: 0 8px 8px;
-  text-align: left;
-  background: #f7f2e8;
-  border-radius: 0 0 8px 8px;
-}
-
-.leader-detail-row + tr td:first-child {
-  border-radius: 8px 0 0 8px;
-}
-
 .leader-player {
   min-width: 120px;
   white-space: nowrap;
@@ -572,34 +561,32 @@ form button {
   font-size: 0.98rem;
 }
 
-.leader-breakdown {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 3px 5px;
-  max-width: none;
-  margin-left: 0;
-  color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.25;
-}
-
-.leader-breakdown small {
-  display: inline-block;
-  padding: 2px 4px;
-  border-radius: 5px;
-  background: rgba(31, 90, 58, 0.07);
-  font-size: 0.68rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.leader-table td > span:not(.avatar):not(.rank-badge):not(.card-badges):not(.leader-breakdown) {
+.leader-table td > span:not(.avatar):not(.rank-badge):not(.card-badges) {
   display: block;
   margin-top: 2px;
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 700;
+}
+
+.points-detail {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.points-detail h4 {
+  margin: 0 0 10px;
+  font-size: 0.96rem;
+}
+
+.points-detail-table {
+  min-width: 500px;
+  margin-top: 0;
+}
+
+.points-detail-table .leader-player {
+  min-width: 96px;
 }
 
 .rules {

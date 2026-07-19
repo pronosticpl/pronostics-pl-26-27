@@ -954,6 +954,7 @@ const els = {
   matchList: document.querySelector("#matchList"),
   matchCount: document.querySelector("#matchCount"),
   leaderboard: document.querySelector("#leaderboard"),
+  pointsDetail: document.querySelector("#pointsDetail"),
   resetBtn: document.querySelector("#resetBtn"),
   exportBtn: document.querySelector("#exportBtn"),
   importInput: document.querySelector("#importInput"),
@@ -1317,6 +1318,7 @@ function render() {
   renderMatches();
   renderSeasonBonus();
   renderLeaderboard();
+  renderPointsDetail();
   renderPlayerStats();
   renderHeaderStats();
   renderSession();
@@ -1855,18 +1857,52 @@ function renderLeaderboard() {
       row.append(cell);
     });
     body.append(row);
-
-    const detailRow = document.createElement("tr");
-    detailRow.className = "leader-detail-row";
-    const detailCell = document.createElement("td");
-    detailCell.colSpan = 3 + days.length;
-    detailCell.innerHTML = leaderboardBreakdownHtml(user.stats);
-    detailRow.append(detailCell);
-    body.append(detailRow);
   });
 
   table.append(header, body);
   els.leaderboard.append(table);
+}
+
+function renderPointsDetail() {
+  const rows = standings();
+  els.pointsDetail.innerHTML = "";
+
+  if (rows.length === 0) return;
+
+  const table = document.createElement("table");
+  table.className = "leader-table points-detail-table";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Joueur</th>
+        <th>Matchs</th>
+        <th>VJ</th>
+        <th>Bonus</th>
+        <th>Pén.</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+  `;
+
+  const body = document.createElement("tbody");
+  rows.forEach((user) => {
+    const stats = user.stats;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td class="leader-player"><strong></strong></td>
+      <td>${stats.matchPoints}</td>
+      <td>${stats.dayWins * 3}</td>
+      <td>${stats.seasonBonus}</td>
+      <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td>
+      <td class="leader-total"><strong>${stats.total}</strong></td>
+    `;
+    row.querySelector("strong").textContent = user.name;
+    body.append(row);
+  });
+
+  table.append(body);
+  els.pointsDetail.innerHTML = "<h4>Résultat détaillé</h4>";
+  els.pointsDetail.append(table);
 }
 
 function renderPlayerStats() {
@@ -1909,18 +1945,6 @@ function renderPlayerStats() {
     card.querySelector(".user-identity").append(cardBadgesFor(user.id));
     els.playerStats.append(card);
   });
-}
-
-function leaderboardBreakdownHtml(stats) {
-  const dayWinBonus = stats.dayWins * 3;
-  return `
-    <span class="leader-breakdown">
-      <small>Matchs ${stats.matchPoints}</small>
-      <small>VJ ${dayWinBonus}</small>
-      <small>Bonus ${stats.seasonBonus}</small>
-      <small>Pén. -${stats.penaltyPoints}</small>
-    </span>
-  `;
 }
 
 function renderOverallStats() {
