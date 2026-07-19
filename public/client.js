@@ -876,27 +876,47 @@ function playerStatsFor(userId) {
 }
 
 function cardSummaryFor(userId) {
-  return leaderboardDays().reduce((summary, day) => {
-    const detail = matchdayCardDetailFor(userId, day);
-    summary.missedPredictions += detail.missedPredictions;
-    summary.yellowCards += detail.yellowCards;
-    summary.redCards += detail.redCards;
-    summary.penaltyPoints += detail.penaltyPoints;
-    return summary;
-  }, { missedPredictions: 0, yellowCards: 0, redCards: 0, penaltyPoints: 0 });
+  return cardStateFor(userId).summary;
 }
 
 function matchdayCardDetailFor(userId, day) {
-  const lockedMatches = state.matches.filter((match) => match.matchday === day && isMatchLocked(match));
-  const missedPredictions = lockedMatches.filter((match) => !hasScore(match.predictions[userId])).length;
-  const redCards = missedPredictions >= 2 ? 1 : 0;
-  const yellowCards = missedPredictions === 1 ? 1 : 0;
-  return {
-    missedPredictions,
-    yellowCards,
-    redCards,
-    penaltyPoints: redCards * 2,
-  };
+  return cardStateFor(userId).days.get(day) || emptyCardDetail();
+}
+
+function cardStateFor(userId) {
+  const days = new Map();
+  const summary = { missedPredictions: 0, yellowCards: 0, redCards: 0, penaltyPoints: 0 };
+  let pendingYellow = 0;
+
+  cardDays().forEach((day) => {
+    const lockedMatches = state.matches.filter((match) => match.matchday === day && isMatchLocked(match));
+    const missedPredictions = lockedMatches.filter((match) => !hasScore(match.predictions[userId])).length;
+    const availableYellows = pendingYellow + missedPredictions;
+    const redCards = Math.min(1, Math.floor(availableYellows / 2));
+    pendingYellow = Math.min(1, Math.max(0, availableYellows - redCards * 2));
+    const detail = {
+      missedPredictions,
+      yellowCards: pendingYellow,
+      redCards,
+      penaltyPoints: redCards * 2,
+    };
+    days.set(day, detail);
+    summary.missedPredictions += detail.missedPredictions;
+    summary.redCards += detail.redCards;
+    summary.penaltyPoints += detail.penaltyPoints;
+  });
+
+  summary.yellowCards = pendingYellow;
+  return { days, summary };
+}
+
+function cardDays() {
+  return [...new Set(state.matches.filter(isMatchdayVisible).map((match) => match.matchday).filter(Boolean))]
+    .sort((a, b) => a - b);
+}
+
+function emptyCardDetail() {
+  return { missedPredictions: 0, yellowCards: 0, redCards: 0, penaltyPoints: 0 };
 }
 
 function cardBadgesFor(userId) {
