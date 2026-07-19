@@ -1952,7 +1952,7 @@ function formatStatValue(value, decimals = 0) {
 }
 
 function renderHeaderStats() {
-  const firstMatch = sortedMatches().find((match) => match.date);
+  const firstMatch = sortedMatches().find((match) => match.date && match.status !== "TEST");
   if (!firstMatch) {
     els.nextMatchLabel.textContent = "Début du championnat";
     els.nextMatchTeams.textContent = "Importe la saison 26-27";
