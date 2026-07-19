@@ -1016,20 +1016,19 @@ function removeMatch(matchId) {
   persist();
 }
 
-function applyTestMode() {
+async function applyTestMode() {
   if (!currentUser()) {
     alert("Connecte-toi pour lancer le mode test.");
     return;
   }
-  const matches = ensureTestMatches();
+  const matches = await ensureTestMatches();
 
   if (matches.length === 0) {
-    alert("Aucun match de première journée à tester.");
+    alert("Aucun match de test disponible depuis l'API.");
     return;
   }
 
   const fakeScores = [
-    { a: "2", b: "1" },
     { a: "1", b: "1" },
     { a: "0", b: "2" },
     { a: "3", b: "2" },
@@ -1042,14 +1041,17 @@ function applyTestMode() {
       const testDate = new Date(Date.now() + (index + 1) * 60 * 60 * 1000);
       match.date = testDate.toISOString();
     }
-    match.result = fakeScores[index];
+    if (!hasScore(match.result)) match.result = fakeScores[index] ?? { a: "1", b: "0" };
     match.status = "TEST";
   });
 
   applyTestSeasonBonus();
   state.testMode = true;
   localStorage.setItem(testModeStorageKey, "true");
-  setStatus("Mode test activé : matchs et bonus fictifs ajoutés.");
+  const hasApiFinal = matches.some((match) => match.externalId === "test-world-cup-final-2022");
+  setStatus(hasApiFinal
+    ? "Mode test activé : finale Coupe du monde chargée depuis l'API."
+    : "Mode test activé, mais la finale Coupe du monde n'a pas été fournie par l'API.");
   persist();
 }
 
@@ -1085,12 +1087,12 @@ function applyTestSeasonBonus() {
   });
 }
 
-function ensureTestMatches() {
+async function ensureTestMatches() {
   const existing = state.matches.filter((match) => match.status === "TEST");
   if (existing.length >= 6) return existing.slice(0, 6);
   const previous = new Map(existing.map((match) => [match.externalId, match]));
   state.matches = state.matches.filter((match) => match.status !== "TEST");
-  const matches = createTestMatches();
+  const matches = await createTestMatches();
   matches.forEach((match) => {
     const oldMatch = previous.get(match.externalId);
     if (oldMatch) match.predictions = oldMatch.predictions ?? {};
@@ -1098,10 +1100,10 @@ function ensureTestMatches() {
   return matches;
 }
 
-function createTestMatches() {
+async function createTestMatches() {
   const kickoff = new Date(Date.now() + 60 * 60 * 1000);
+  const apiFinal = await fetchWorldCupFinalTestMatch();
   const teams = [
-    ["Arsenal", "Liverpool"],
     ["Chelsea", "Manchester United"],
     ["Tottenham", "Manchester City"],
     ["Everton", "Newcastle"],
@@ -1111,18 +1113,44 @@ function createTestMatches() {
 
   const matches = teams.map(([teamA, teamB], index) => ({
     id: crypto.randomUUID(),
-    externalId: `test-${index + 1}`,
+    externalId: `test-${index + 2}`,
     teamA,
     teamB,
-    date: new Date(kickoff.getTime() + index * 60 * 60 * 1000).toISOString(),
-    matchday: index < 3 ? 1 : 2,
+    date: new Date(kickoff.getTime() + (index + 1) * 60 * 60 * 1000).toISOString(),
+    matchday: index < 2 ? 1 : 2,
     status: "TEST",
     result: { a: "", b: "" },
     predictions: {},
   }));
 
+  if (apiFinal) matches.unshift(apiFinal);
   state.matches.push(...matches);
   return matches;
+}
+
+async function fetchWorldCupFinalTestMatch() {
+  if (location.protocol === "file:") return null;
+  try {
+    setStatus("Récupération finale Coupe du monde depuis l'API...");
+    const response = await fetch("/api/test-match?competition=WC&season=2022&stage=FINAL", { cache: "no-store" });
+    if (!response.ok) throw new Error(`Erreur API ${response.status}`);
+    const data = await response.json();
+    const match = data.match;
+    if (!match) throw new Error("Aucun match API");
+    const testMatch = fromApiMatch({ ...match, matchday: 1 });
+    return {
+      ...testMatch,
+      id: "test-world-cup-final-2022",
+      externalId: "test-world-cup-final-2022",
+      status: "TEST",
+      date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      predictions: testMatch.predictions ?? {},
+    };
+  } catch (error) {
+    console.error(error);
+    setStatus("Finale Coupe du monde indisponible via l'API. Vérifie l'accès football-data WC.");
+    return null;
+  }
 }
 
 function firstMatchday() {
