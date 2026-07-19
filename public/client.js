@@ -1436,11 +1436,6 @@ function bonusControlsHtml(category, role) {
       <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player">
         ${playerSelectOptionsHtml("", "")}
       </select>
-      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="playerCustom" type="text" autocomplete="off" placeholder="Joueur libre si absent" />
-      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="replacement">
-        ${playerSelectOptionsHtml("", "")}
-      </select>
-      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="replacementCustom" type="text" autocomplete="off" placeholder="Remplaçant libre si absent" />
     </span>
   `;
 }
@@ -1488,7 +1483,6 @@ function playerSelectOptionsHtml(team, selected = "") {
   players.forEach((player) => {
     options.push(`<option value="${escapeHtml(player)}"${same(player, selected) ? " selected" : ""}>${escapeHtml(player)}</option>`);
   });
-  options.push(`<option value="__custom__"${selected && !players.some((player) => same(player, selected)) ? " selected" : ""}>Autre joueur</option>`);
   return options.join("");
 }
 
@@ -1561,20 +1555,13 @@ function setBonusControlsValue(row, category, role, value) {
     return;
   }
 
-  const { team, player, replacement } = splitBonusIndividualValue(value);
+  const { team, player } = splitBonusIndividualValue(value);
   const teamInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`);
   const playerSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`);
-  const playerCustom = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="playerCustom"]`);
-  const replacementSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="replacement"]`);
-  const replacementCustom = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="replacementCustom"]`);
   teamInput.innerHTML = teamSelectOptionsHtml(team);
   setSelectValue(teamInput, team);
   playerSelect.innerHTML = playerSelectOptionsHtml(team, player);
-  replacementSelect.innerHTML = playerSelectOptionsHtml(team, replacement);
   setSelectValue(playerSelect, player);
-  setSelectValue(replacementSelect, replacement);
-  playerCustom.value = playerSelect.value === "__custom__" ? player : "";
-  replacementCustom.value = replacementSelect.value === "__custom__" ? replacement : "";
 }
 
 function bonusValueFromControls(input) {
@@ -1584,48 +1571,34 @@ function bonusValueFromControls(input) {
   if (!individualBonusIds.has(bonusId)) return clean(input.value);
 
   const team = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="team"]`)?.value ?? "");
-  const player = bonusPlayerChoice(row, role, bonusId, "player");
-  const replacement = bonusPlayerChoice(row, role, bonusId, "replacement");
+  const player = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="player"]`)?.value ?? "");
   if (!team && !player) return "";
   if (!team) return player;
-  const mainChoice = player ? `${team} - ${player}` : team;
-  return replacement ? `${mainChoice} | remplaçant: ${replacement}` : mainChoice;
+  return player ? `${team} - ${player}` : team;
 }
 
 function splitBonusIndividualValue(value = "") {
-  const [mainValue, replacementValue = ""] = String(value).split("| remplaçant:");
+  const mainValue = String(value).split("|")[0].split(" / ")[0];
   const parts = mainValue.split(" - ");
-  const replacement = clean(replacementValue);
-  if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")), replacement };
+  if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")) };
   if (bonusTeamChoices().some((team) => same(team, clean(mainValue)))) {
-    return { team: clean(mainValue), player: "", replacement };
+    return { team: clean(mainValue), player: "" };
   }
-  return { team: "", player: clean(mainValue), replacement };
+  return { team: "", player: clean(mainValue) };
 }
 
 function refreshBonusPlayerSelect(input) {
   if (input.dataset.bonusPart !== "team" || !individualBonusIds.has(input.dataset.bonusId)) return;
   const row = input.closest(".bonus-row");
-  ["player", "replacement"].forEach((part) => {
-    const select = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="${part}"]`);
-    const custom = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="${part}Custom"]`);
-    select.innerHTML = playerSelectOptionsHtml(input.value);
-    select.value = "";
-    custom.value = "";
-  });
-}
-
-function bonusPlayerChoice(row, role, bonusId, part) {
-  const selectValue = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="${part}"]`)?.value ?? "");
-  const customValue = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="${part}Custom"]`)?.value ?? "");
-  if (selectValue === "__custom__") return customValue;
-  return selectValue || customValue;
+  const select = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="player"]`);
+  select.innerHTML = playerSelectOptionsHtml(input.value);
+  select.value = "";
 }
 
 function setSelectValue(select, value) {
   if (!select || !value) return;
   const option = [...select.options].find((item) => same(item.value, value));
-  select.value = option ? option.value : "__custom__";
+  select.value = option ? option.value : "";
 }
 
 function renderAdminControls() {
@@ -2148,10 +2121,10 @@ function seasonBonusCategoryPoints(userId, category) {
 }
 
 function individualBonusMatchesOfficial(prediction, official) {
-  const { player, replacement } = splitBonusIndividualValue(prediction);
+  const { player } = splitBonusIndividualValue(prediction);
   const officialParts = splitBonusIndividualValue(official);
-  const officialPlayer = officialParts.player || officialParts.replacement || official;
-  return [player, replacement].filter(Boolean).some((candidate) => same(candidate, officialPlayer) || same(candidate, official));
+  const officialPlayer = officialParts.player || official;
+  return Boolean(player && (same(player, officialPlayer) || same(player, official)));
 }
 
 function pointsFor(match, userId) {
