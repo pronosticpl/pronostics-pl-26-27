@@ -1840,7 +1840,7 @@ function renderLeaderboard() {
 
     const totalCell = document.createElement("td");
     totalCell.className = "leader-total";
-    totalCell.innerHTML = leaderboardTotalHtml(user.stats);
+    totalCell.innerHTML = `<strong>${user.stats.total} pts</strong>`;
 
     const bonus = seasonBonusDetailsFor(user.id);
     const bonusCell = document.createElement("td");
@@ -1855,6 +1855,14 @@ function renderLeaderboard() {
       row.append(cell);
     });
     body.append(row);
+
+    const detailRow = document.createElement("tr");
+    detailRow.className = "leader-detail-row";
+    const detailCell = document.createElement("td");
+    detailCell.colSpan = 3 + days.length;
+    detailCell.innerHTML = leaderboardBreakdownHtml(user.stats);
+    detailRow.append(detailCell);
+    body.append(detailRow);
   });
 
   table.append(header, body);
@@ -1903,10 +1911,9 @@ function renderPlayerStats() {
   });
 }
 
-function leaderboardTotalHtml(stats) {
+function leaderboardBreakdownHtml(stats) {
   const dayWinBonus = stats.dayWins * 3;
   return `
-    <strong>${stats.total} pts</strong>
     <span class="leader-breakdown">
       <small>Matchs ${stats.matchPoints}</small>
       <small>VJ ${dayWinBonus}</small>
