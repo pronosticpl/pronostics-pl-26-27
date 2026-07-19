@@ -826,7 +826,9 @@ function leaderboardDays() {
 }
 
 function isMatchdayVisible(match) {
-  return Boolean(match.matchday && isMatchLocked(match));
+  if (!match.matchday) return false;
+  if (state.testMode && match.status === "TEST") return hasResult(match);
+  return isMatchLocked(match);
 }
 
 function matchdayDetailFor(userId, day) {
@@ -1089,7 +1091,9 @@ function applyTestSeasonBonus() {
 
 async function ensureTestMatches() {
   const existing = state.matches.filter((match) => match.status === "TEST");
-  if (existing.length >= 6) return existing.slice(0, 6);
+  if (existing.length >= 6 && existing.some((match) => match.externalId === "test-world-cup-final-2022")) {
+    return existing.slice(0, 6);
+  }
   const previous = new Map(existing.map((match) => [match.externalId, match]));
   state.matches = state.matches.filter((match) => match.status !== "TEST");
   const matches = await createTestMatches();
