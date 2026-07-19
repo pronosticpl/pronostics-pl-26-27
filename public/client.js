@@ -515,6 +515,10 @@ function renderSeasonBonus() {
 }
 
 function bonusControlsHtml(category, role) {
+  if (role === "official") {
+    return `<input data-role="${role}" data-bonus-id="${category.id}" type="text" autocomplete="off" placeholder="${individualBonusIds.has(category.id) ? "Equipe - joueur" : "Réponse officielle"}" />`;
+  }
+
   if (!individualBonusIds.has(category.id)) {
     return `<select data-role="${role}" data-bonus-id="${category.id}">${teamOptionsHtml()}</select>`;
   }
@@ -562,6 +566,16 @@ function bonusPlayerListId(role, bonusId) {
 }
 
 function setBonusControlsValue(row, category, role, value) {
+  const directInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]:not([data-bonus-part])`);
+  if (directInput) {
+    if (directInput.tagName === "SELECT") {
+      setSelectValue(directInput, value);
+    } else {
+      directInput.value = value;
+    }
+    return;
+  }
+
   if (!individualBonusIds.has(category.id)) {
     setSelectValue(row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]`), value);
     return;
@@ -586,6 +600,7 @@ function setSelectValue(select, value) {
 function bonusValueFromControls(input) {
   const row = input.closest(".bonus-row");
   const { role, bonusId } = input.dataset;
+  if (!input.dataset.bonusPart) return clean(input.value);
   if (!individualBonusIds.has(bonusId)) return clean(input.value);
 
   const team = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="team"]`)?.value ?? "");
