@@ -583,7 +583,10 @@ function teamSelectOptionsHtml(selected = "") {
 }
 
 function bonusTeamChoices() {
-  return [...new Set(state.matches.flatMap((match) => [match.teamA, match.teamB]).filter(Boolean))]
+  const playerTeams = Object.keys(builtInPlayersByTeam).length ? Object.keys(builtInPlayersByTeam) : Object.keys(state.playersByTeam || {});
+  const matchTeams = Object.keys(builtInPlayersByTeam).length ? [] : state.matches.flatMap((match) => [match.teamA, match.teamB]).filter(Boolean);
+  return [...new Set([...playerTeams, ...matchTeams])]
+    .filter((team) => playersForTeam(team).length > 0)
     .sort((a, b) => a.localeCompare(b, "fr"));
 }
 
