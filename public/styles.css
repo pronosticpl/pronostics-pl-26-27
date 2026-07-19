@@ -695,9 +695,11 @@ form button {
 }
 
 .player-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 12px;
+  overflow-x: auto;
+}
+
+.stat-table {
+  min-width: 900px;
 }
 
 .overall-stats {
@@ -1134,10 +1136,6 @@ form button {
 
   .leader-table {
     min-width: 520px;
-  }
-
-  .player-stats {
-    grid-template-columns: 1fr;
   }
 
   .stat-grid {
