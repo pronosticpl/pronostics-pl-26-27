@@ -18,6 +18,7 @@ const seasonBonusCategories = [
   { id: "bestPlayer", label: "Meilleur joueur", points: 3 },
 ];
 const individualBonusIds = new Set(["topScorer", "bestAssister", "goldenGloves", "bestPlayer"]);
+const builtInPlayersByTeam = normalizePlayersByTeam(window.NOVAPRONO_PLAYERS || {});
 
 const defaultState = {
   users: [],
@@ -340,12 +341,16 @@ async function syncPlayers(silent = false) {
     const response = await fetch(`/api/players?season=${seasonYear}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`Erreur API ${response.status}`);
     const data = await response.json();
-    const importedPlayers = normalizePlayersByTeam(data.playersByTeam);
+    const importedPlayers = mergePlayersByTeam(normalizePlayersByTeam(data.playersByTeam), builtInPlayersByTeam);
     const playerCount = Object.values(importedPlayers).reduce((sum, players) => sum + players.length, 0);
     if (playerCount > 0) state.playersByTeam = importedPlayers;
-    if (playerCount === 0 && !silent) setStatus("Aucun joueur reçu de football-data. Tu peux écrire le nom à la main.");
+    if (playerCount === 0 && !silent) setStatus("Aucun joueur reçu. Tu peux écrire le nom à la main.");
     return playerCount;
   } catch (error) {
+    if (playersCount(builtInPlayersByTeam) > 0) {
+      state.playersByTeam = mergePlayersByTeam(state.playersByTeam, builtInPlayersByTeam);
+      return playersCount(state.playersByTeam);
+    }
     if (!silent) setStatus("Impossible d'importer la liste des joueurs.");
     console.error(error);
     return 0;
@@ -353,6 +358,11 @@ async function syncPlayers(silent = false) {
 }
 
 async function ensurePlayersLoaded() {
+  if (playersCount() === 0 && playersCount(builtInPlayersByTeam) > 0) {
+    state.playersByTeam = mergePlayersByTeam(state.playersByTeam, builtInPlayersByTeam);
+    persistLocalOnly();
+    render();
+  }
   if (location.protocol === "file:" || playersCount() > 0) return;
   const playerCount = await syncPlayers(true);
   if (playerCount > 0) {
@@ -609,8 +619,8 @@ function playersForTeam(team) {
   return [...new Set(players)].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
-function playersCount() {
-  return Object.values(state.playersByTeam || {}).reduce((sum, players) => sum + players.length, 0);
+function playersCount(playersByTeam = state.playersByTeam) {
+  return Object.values(playersByTeam || {}).reduce((sum, players) => sum + players.length, 0);
 }
 
 function teamLookupKeys(team) {
@@ -619,8 +629,10 @@ function teamLookupKeys(team) {
     "Arsenal FC": ["Arsenal"],
     Bournemouth: ["AFC Bournemouth"],
     "AFC Bournemouth": ["Bournemouth"],
-    Brighton: ["Brighton & Hove Albion"],
+    Brighton: ["Brighton & Hove Albion", "Brighton and Hove Albion", "Brighton Hove"],
+    "Brighton Hove": ["Brighton", "Brighton & Hove Albion", "Brighton and Hove Albion"],
     "Brighton & Hove Albion": ["Brighton"],
+    "Brighton and Hove Albion": ["Brighton", "Brighton Hove", "Brighton & Hove Albion"],
     Ipswich: ["Ipswich Town"],
     "Ipswich Town": ["Ipswich"],
     Leeds: ["Leeds United"],
