@@ -1412,7 +1412,7 @@ function renderSeasonBonus() {
     els.seasonBonusList.append(row);
   });
 
-  if (locked) {
+  if (locked || state.testMode) {
     els.seasonBonusList.append(renderPublicSeasonBonus());
   }
 }
@@ -2462,7 +2462,7 @@ function isMatchLocked(match) {
 }
 
 function isSeasonLocked() {
-  const firstMatch = sortedMatches().find((match) => match.date);
+  const firstMatch = sortedMatches().find((match) => match.date && match.status !== "TEST");
   return firstMatch ? isMatchLocked(firstMatch) : false;
 }
 
