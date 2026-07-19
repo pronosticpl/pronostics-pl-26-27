@@ -1417,14 +1417,11 @@ function renderSeasonBonus() {
 }
 
 function bonusControlsHtml(category, role) {
-  if (role === "official" && !individualBonusIds.has(category.id)) {
-    return `<input data-role="${role}" data-bonus-id="${category.id}" type="text" autocomplete="off" placeholder="${individualBonusIds.has(category.id) ? "Equipe - joueur" : "Réponse officielle"}" />`;
-  }
-
   if (!individualBonusIds.has(category.id)) {
     return `
-      <input data-role="${role}" data-bonus-id="${category.id}" type="text" autocomplete="off" list="${bonusTeamListId(role, category.id)}" placeholder="Equipe" />
-      <datalist id="${bonusTeamListId(role, category.id)}">${teamOptionsHtml()}</datalist>
+      <select data-role="${role}" data-bonus-id="${category.id}">
+        ${teamSelectOptionsHtml("")}
+      </select>
     `;
   }
 
@@ -1546,7 +1543,12 @@ function bonusTeamListId(role, bonusId) {
 function setBonusControlsValue(row, category, role, value) {
   const directInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]:not([data-bonus-part])`);
   if (directInput) {
-    directInput.value = value;
+    if (directInput.tagName === "SELECT") {
+      directInput.innerHTML = teamSelectOptionsHtml(value);
+      setSelectValue(directInput, value);
+    } else {
+      directInput.value = value;
+    }
     return;
   }
 
