@@ -352,6 +352,15 @@ async function syncPlayers(silent = false) {
   }
 }
 
+async function ensurePlayersLoaded() {
+  if (location.protocol === "file:" || playersCount() > 0) return;
+  const playerCount = await syncPlayers(true);
+  if (playerCount > 0) {
+    persistLocalOnly();
+    render();
+  }
+}
+
 async function saveApiKey() {
   const key = els.apiKey.value.trim();
   if (!key) {
@@ -598,6 +607,10 @@ function playersForTeam(team) {
   const keys = teamLookupKeys(team);
   const players = keys.flatMap((key) => state.playersByTeam?.[key] || []);
   return [...new Set(players)].sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+function playersCount() {
+  return Object.values(state.playersByTeam || {}).reduce((sum, players) => sum + players.length, 0);
 }
 
 function teamLookupKeys(team) {
@@ -1989,6 +2002,7 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
+ensurePlayersLoaded();
 ensureAutoSync();
 loadRemoteState();
 startRemoteRefresh();
