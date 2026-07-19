@@ -48,7 +48,7 @@ button {
   padding: 24px;
   background:
     linear-gradient(rgba(10, 28, 20, 0.65), rgba(10, 28, 20, 0.78)),
-    url("assets/match-night.png") center / cover;
+    url("assets/kop-hero.png") center top / cover;
 }
 
 .access-card {
@@ -220,7 +220,7 @@ form button {
   color: #fffdf8;
   background:
     linear-gradient(90deg, rgba(15, 32, 24, 0.9), rgba(15, 32, 24, 0.6) 52%, rgba(15, 32, 24, 0.42)),
-    url("assets/match-night.png") center / cover no-repeat;
+    url("assets/kop-hero.png") center top / cover no-repeat;
 }
 
 .hero-copy {
