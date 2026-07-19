@@ -905,8 +905,8 @@ function cardStateFor(userId) {
   let pendingYellow = 0;
 
   cardDays().forEach((day) => {
-    const lockedMatches = state.matches.filter((match) => match.matchday === day && isMatchLocked(match));
-    const missedPredictions = lockedMatches.filter((match) => !hasScore(match.predictions[userId])).length;
+    const countableMatches = state.matches.filter((match) => match.matchday === day && isCardCountableMatch(match));
+    const missedPredictions = countableMatches.filter((match) => !hasScore(match.predictions[userId])).length;
     const availableYellows = pendingYellow + missedPredictions;
     const redCards = Math.min(1, Math.floor(availableYellows / 2));
     pendingYellow = Math.min(1, Math.max(0, availableYellows - redCards * 2));
@@ -929,6 +929,11 @@ function cardStateFor(userId) {
 function cardDays() {
   return [...new Set(state.matches.filter(isMatchdayVisible).map((match) => match.matchday).filter(Boolean))]
     .sort((a, b) => a - b);
+}
+
+function isCardCountableMatch(match) {
+  if (state.testMode && match.status === "TEST") return hasResult(match);
+  return isMatchLocked(match);
 }
 
 function emptyCardDetail() {
