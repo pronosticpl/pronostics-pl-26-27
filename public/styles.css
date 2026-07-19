@@ -695,18 +695,27 @@ form button {
 }
 
 .player-stats {
-  overflow-x: auto;
-}
-
-.stat-table {
-  min-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
 }
 
 .overall-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
+  overflow-x: auto;
   margin-bottom: 14px;
+}
+
+.overall-table {
+  min-width: 520px;
+}
+
+.overall-table td:nth-child(2) {
+  text-align: left;
+}
+
+.penalty-value {
+  color: var(--red);
+  font-weight: 850;
 }
 
 .overall-stat {
@@ -1136,6 +1145,10 @@ form button {
 
   .leader-table {
     min-width: 520px;
+  }
+
+  .player-stats {
+    grid-template-columns: 1fr;
   }
 
   .stat-grid {

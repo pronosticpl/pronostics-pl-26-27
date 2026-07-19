@@ -1872,54 +1872,34 @@ function renderPlayerStats() {
 
   renderOverallStats();
 
-  const table = document.createElement("table");
-  table.className = "leader-table stat-table";
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Joueur</th>
-        <th>Total</th>
-        <th>Matchs</th>
-        <th>Bonus</th>
-        <th>Exact</th>
-        <th>Résultat</th>
-        <th>J. gagnées</th>
-        <th>Oublis</th>
-        <th>Cartons</th>
-        <th>Pénalité</th>
-        <th>Moy.</th>
-      </tr>
-    </thead>
-  `;
-  const body = document.createElement("tbody");
-
-  standings().forEach((user, index) => {
+  standings().forEach((user) => {
     const stats = playerStatsFor(user.id);
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td class="leader-player">
-        <span class="rank-badge">${index + 1}</span>
-        <strong></strong>
-      </td>
-      <td class="leader-total">${stats.total}<span>pts</span></td>
-      <td>${stats.matchPoints}<span>${stats.predictions} pronos</span></td>
-      <td>${stats.seasonBonus}<span>pts</span></td>
-      <td>${stats.exactScores}<span>scores</span></td>
-      <td>${stats.goodResults}<span>bons</span></td>
-      <td>${stats.dayWins}<span>journées</span></td>
-      <td>${stats.missedPredictions}</td>
-      <td>${stats.yellowCards}J / ${stats.redCards}R</td>
-      <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}<span>pts</span></td>
-      <td>${stats.average}<span>pts/prono</span></td>
+    const card = document.createElement("article");
+    card.className = "stat-card";
+    card.innerHTML = `
+      <div class="stat-title">
+        <div class="user-identity"><h4></h4></div>
+        <strong>${stats.total} pts</strong>
+      </div>
+      <div class="stat-grid">
+        <span><b>${stats.predictions}</b> pronos</span>
+        <span><b>${stats.exactScores}</b> scores exacts</span>
+        <span><b>${stats.goodResults}</b> bons résultats</span>
+        <span><b>${stats.dayWins}</b> journées gagnées</span>
+        <span><b>${stats.missedPredictions}</b> oublis</span>
+        <span><b>${stats.yellowCards}</b> jaunes</span>
+        <span><b>${stats.redCards}</b> rouges</span>
+        <span><b>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</b> pts pénalité</span>
+        <span><b>${stats.matchPoints}</b> pts matchs</span>
+        <span><b>${stats.seasonBonus}</b> pts bonus</span>
+        <span><b>${stats.average}</b> pts/prono</span>
+      </div>
     `;
-    row.querySelector(".leader-player").prepend(avatarNode(user));
-    row.querySelector("strong").textContent = user.name;
-    row.querySelector(".leader-player").append(cardBadgesFor(user.id));
-    body.append(row);
+    card.querySelector(".user-identity").prepend(avatarNode(user));
+    card.querySelector("h4").textContent = user.name;
+    card.querySelector(".user-identity").append(cardBadgesFor(user.id));
+    els.playerStats.append(card);
   });
-
-  table.append(body);
-  els.playerStats.append(table);
 }
 
 function renderOverallStats() {
@@ -1933,19 +1913,37 @@ function renderOverallStats() {
     { label: "Plus de pénalités", value: (row) => row.stats.penaltyPoints, suffix: "pts", penalty: true },
   ];
 
+  const table = document.createElement("table");
+  table.className = "leader-table overall-table";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Stat</th>
+        <th>Leader</th>
+        <th>Valeur</th>
+      </tr>
+    </thead>
+  `;
+  const body = document.createElement("tbody");
+
   items.forEach((item) => {
     const value = item.lowest
       ? Math.min(...rows.map(item.value))
       : Math.max(...rows.map(item.value));
     const leaders = rows.filter((row) => item.value(row) === value);
-    const article = document.createElement("article");
-    article.className = "overall-stat";
-    article.innerHTML = `<span></span><strong></strong><small></small>`;
-    article.querySelector("span").textContent = item.label;
-    article.querySelector("strong").textContent = item.penalty && value ? `-${value}` : formatStatValue(value, item.decimals);
-    article.querySelector("small").textContent = `${leaders.map((row) => row.user.name).join(", ")} · ${item.suffix}`;
-    els.overallStats.append(article);
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${item.label}</td>
+      <td><strong></strong></td>
+      <td class="${item.penalty && value ? "penalty-value" : "leader-total"}"></td>
+    `;
+    row.querySelector("strong").textContent = leaders.map((leader) => leader.user.name).join(", ");
+    row.lastElementChild.textContent = `${item.penalty && value ? `-${value}` : formatStatValue(value, item.decimals)} ${item.suffix}`;
+    body.append(row);
   });
+
+  table.append(body);
+  els.overallStats.append(table);
 }
 
 function formatStatValue(value, decimals = 0) {
