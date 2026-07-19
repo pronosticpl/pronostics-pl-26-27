@@ -48,10 +48,14 @@ const els = {
   signupForm: document.querySelector("#signupForm"),
   signupName: document.querySelector("#signupName"),
   signupPin: document.querySelector("#signupPin"),
+  signupAvatar: document.querySelector("#signupAvatar"),
   loginForm: document.querySelector("#loginForm"),
   loginUser: document.querySelector("#loginUser"),
   loginPin: document.querySelector("#loginPin"),
   logoutBtn: document.querySelector("#logoutBtn"),
+  avatarPanel: document.querySelector("#avatarPanel"),
+  avatarPreview: document.querySelector("#avatarPreview"),
+  avatarInput: document.querySelector("#avatarInput"),
   friendList: document.querySelector("#friendList"),
   friendCount: document.querySelector("#friendCount"),
   sessionLabel: document.querySelector("#sessionLabel"),
@@ -135,7 +139,7 @@ function setMobileTab(tabName) {
   });
 }
 
-els.signupForm.addEventListener("submit", (event) => {
+els.signupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const name = clean(els.signupName.value);
   const pin = els.signupPin.value.trim();
@@ -144,11 +148,29 @@ els.signupForm.addEventListener("submit", (event) => {
     alert("Ce pseudo existe déjà.");
     return;
   }
-  const user = { id: crypto.randomUUID(), name, pin, createdAt: Date.now() };
+  let avatar = "";
+  try {
+    avatar = await avatarFromFile(els.signupAvatar.files[0]);
+  } catch {
+    alert("La photo n'a pas pu être ajoutée. Le joueur est inscrit sans avatar.");
+  }
+  const user = { id: crypto.randomUUID(), name, pin, avatar, createdAt: Date.now() };
   state.users.push(user);
   setCurrentUser(user.id);
   els.signupForm.reset();
   persist();
+});
+
+els.avatarInput.addEventListener("change", async () => {
+  const user = currentUser();
+  if (!user) return;
+  try {
+    user.avatar = await avatarFromFile(els.avatarInput.files[0]);
+    els.avatarInput.value = "";
+    persist();
+  } catch {
+    alert("Impossible d'ajouter cette photo.");
+  }
 });
 
 els.loginForm.addEventListener("submit", (event) => {
@@ -398,14 +420,17 @@ function renderUsers() {
   els.friendList.innerHTML = "";
   state.users.forEach((user) => {
     const item = document.createElement("li");
+    const identity = document.createElement("span");
     const name = document.createElement("span");
     const button = document.createElement("button");
+    identity.className = "user-identity";
     name.textContent = user.name;
     button.type = "button";
     button.textContent = "×";
     button.title = `Retirer ${user.name}`;
     button.addEventListener("click", () => removeUser(user.id));
-    item.append(name, button);
+    identity.append(avatarNode(user), name);
+    item.append(identity, button);
     els.friendList.append(item);
   });
 }
@@ -413,6 +438,7 @@ function renderUsers() {
 function renderSession() {
   const user = currentUser();
   els.sessionLabel.textContent = user ? `Connecté: ${user.name}${isAdmin() ? " · admin" : ""}` : "Non connecté";
+  renderAvatarPanel(user);
 }
 
 function renderSeasonBonus() {
@@ -543,8 +569,8 @@ function renderPredictions(container, match) {
   row.className = "prediction-row";
 
   const name = document.createElement("span");
-  name.className = "friend-name";
-  name.textContent = `Prono de ${user.name}`;
+  name.className = "friend-name user-identity";
+  name.append(avatarNode(user), document.createTextNode(`Prono de ${user.name}`));
 
   const inputs = document.createElement("span");
   inputs.className = "score-inputs";
@@ -596,10 +622,13 @@ function renderPublicMatchPredictions(match) {
   state.users.forEach((user) => {
     const prediction = match.predictions[user.id];
     const item = document.createElement("p");
+    const identity = document.createElement("span");
     const score = hasScore(prediction) ? `${prediction.a} - ${prediction.b}` : "Aucun prono";
     const points = pointsFor(match, user.id);
-    item.innerHTML = `<span></span><b><span>${score}</span><small>${points} pts</small></b>`;
-    item.querySelector("span").textContent = user.name;
+    identity.className = "user-identity";
+    identity.append(avatarNode(user), document.createTextNode(user.name));
+    item.append(identity);
+    item.insertAdjacentHTML("beforeend", `<b><span>${score}</span><small>${points} pts</small></b>`);
     box.append(item);
   });
 
@@ -671,7 +700,8 @@ function renderLeaderboard() {
     const row = document.createElement("tr");
     const nameCell = document.createElement("td");
     nameCell.className = "leader-player";
-    nameCell.innerHTML = `<span>${index + 1}</span><strong></strong>`;
+    nameCell.innerHTML = `<span class="rank-badge">${index + 1}</span>`;
+    nameCell.append(avatarNode(user), document.createElement("strong"));
     nameCell.querySelector("strong").textContent = user.name;
 
     const totalCell = document.createElement("td");
@@ -712,7 +742,7 @@ function renderPlayerStats() {
     card.className = "stat-card";
     card.innerHTML = `
       <div class="stat-title">
-        <h4></h4>
+        <div class="user-identity"><h4></h4></div>
         <strong>${stats.total} pts</strong>
       </div>
       <div class="stat-grid">
@@ -725,6 +755,7 @@ function renderPlayerStats() {
         <span><b>${stats.average}</b> pts/prono</span>
       </div>
     `;
+    card.querySelector(".user-identity").prepend(avatarNode(user));
     card.querySelector("h4").textContent = user.name;
     els.playerStats.append(card);
   });
@@ -1083,6 +1114,57 @@ function setCurrentUser(userId) {
   } else {
     localStorage.removeItem(sessionUserStorageKey);
   }
+}
+
+function renderAvatarPanel(user) {
+  els.avatarPanel.hidden = !user;
+  els.avatarPreview.innerHTML = "";
+  if (user) els.avatarPreview.append(avatarNode(user, "large"));
+}
+
+function avatarNode(user, size = "") {
+  const avatar = document.createElement(user?.avatar ? "img" : "span");
+  avatar.className = `avatar ${size}`.trim();
+  if (user?.avatar) {
+    avatar.src = user.avatar;
+    avatar.alt = `Photo de ${user.name}`;
+  } else {
+    avatar.textContent = initials(user?.name);
+    avatar.setAttribute("aria-hidden", "true");
+  }
+  return avatar;
+}
+
+function initials(name = "") {
+  const cleaned = clean(name);
+  return cleaned ? cleaned.slice(0, 2).toLocaleUpperCase("fr") : "?";
+}
+
+function avatarFromFile(file) {
+  if (!file) return Promise.resolve("");
+  if (!file.type.startsWith("image/")) return Promise.reject(new Error("Format image invalide"));
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const reader = new FileReader();
+    reader.onload = () => {
+      image.onload = () => {
+        const size = 160;
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        const sourceSize = Math.min(image.naturalWidth, image.naturalHeight);
+        const sourceX = Math.max(0, Math.round((image.naturalWidth - sourceSize) / 2));
+        const sourceY = Math.max(0, Math.round((image.naturalHeight - sourceSize) / 2));
+        canvas.width = size;
+        canvas.height = size;
+        context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
+      };
+      image.onerror = reject;
+      image.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function isAdmin() {

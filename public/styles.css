@@ -357,6 +357,76 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(46, 123, 81, 0.13);
 }
 
+.file-field {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 0 11px;
+  color: var(--green);
+  background: rgba(31, 90, 58, 0.06);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.file-field input {
+  display: none;
+}
+
+.compact-file {
+  width: 100%;
+}
+
+.avatar-panel {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f7f2e8;
+}
+
+.avatar-panel[hidden] {
+  display: none;
+}
+
+.avatar-preview {
+  display: grid;
+  place-items: center;
+}
+
+.avatar,
+.leader-player .avatar {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: #fffdf8;
+  background: var(--green);
+  border: 2px solid rgba(255, 253, 248, 0.9);
+  object-fit: cover;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.avatar.large {
+  width: 42px;
+  height: 42px;
+}
+
+.user-identity {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 form button {
   color: #fffdf8;
   background: var(--green);
@@ -429,9 +499,10 @@ form button {
 
 .leader-player {
   min-width: 120px;
+  white-space: nowrap;
 }
 
-.leader-player span {
+.leader-player .rank-badge {
   display: inline-grid;
   place-items: center;
   width: 24px;
@@ -454,7 +525,7 @@ form button {
   font-weight: 850;
 }
 
-.leader-table td span {
+.leader-table td > span:not(.avatar):not(.rank-badge) {
   display: block;
   margin-top: 2px;
   color: var(--muted);
@@ -656,6 +727,7 @@ form button {
 .public-bonus p,
 .public-predictions p {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   color: var(--muted);
