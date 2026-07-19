@@ -788,7 +788,6 @@ function renderPlayerStats() {
 function renderOverallStats() {
   const rows = state.users.map((user) => ({ user, stats: playerStatsFor(user.id) }));
   const items = [
-    { label: "Plus de pronos", value: (row) => row.stats.predictions, suffix: "pronos" },
     { label: "Scores exacts", value: (row) => row.stats.exactScores, suffix: "scores" },
     { label: "Bons résultats", value: (row) => row.stats.goodResults, suffix: "résultats" },
     { label: "Journées gagnées", value: (row) => row.stats.dayWins, suffix: "journées" },
