@@ -1,4 +1,5 @@
 const { sendJson } = require("./_supabase");
+const fixedPlayersByTeam = require("./player-list");
 
 module.exports = async function handler(request, response) {
   const token = process.env.FOOTBALL_DATA_API_KEY || request.headers["x-auth-token"];
@@ -6,6 +7,7 @@ module.exports = async function handler(request, response) {
 
   try {
     const playersByTeam = {};
+    await mergePlayers(playersByTeam, Promise.resolve(fixedPlayersByTeam));
     await mergePlayers(playersByTeam, fetchFantasyPremierLeaguePlayers());
     if (token) await mergePlayers(playersByTeam, fetchFootballDataPlayers(token, season));
     sortPlayers(playersByTeam);
