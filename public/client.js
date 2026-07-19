@@ -2289,7 +2289,7 @@ function pointsFor(match, userId) {
   let points = 0;
   if (resultA === predA) points += 1;
   if (resultB === predB) points += 1;
-  if (sameOutcome) points += 2;
+  if (sameOutcome) points += 3;
   if (sameDiff) points += 2;
   return points;
 }
