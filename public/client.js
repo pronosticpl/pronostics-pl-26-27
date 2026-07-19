@@ -22,6 +22,7 @@ const individualBonusIds = new Set(["topScorer", "bestAssister", "goldenGloves",
 const defaultState = {
   users: [],
   matches: [],
+  playersByTeam: {},
   seasonBonus: { official: {}, predictions: {} },
   deletedUsers: { ids: {}, names: {} },
   currentUserId: null,
@@ -227,6 +228,7 @@ els.refreshStateBtn.addEventListener("click", async () => {
 els.seasonBonusList.addEventListener("change", (event) => {
   const input = event.target.closest("[data-bonus-id]");
   if (!input) return;
+  refreshBonusPlayerSelect(input);
   const value = bonusValueFromControls(input);
 
   if (input.dataset.role === "official") {
@@ -322,13 +324,28 @@ async function syncPremierLeague(silent = false) {
     const data = await response.json();
     if (!Array.isArray(data.matches)) throw new Error("Réponse API invalide");
     data.matches.forEach((match) => upsertMatch(fromApiMatch(match)));
+    const playerCount = await syncPlayers(true);
     state.lastSync = new Date().toISOString();
     persist();
-    setStatus(`${data.matches.length} matchs Premier League 2026-2027 synchronisés.`);
+    setStatus(`${data.matches.length} matchs et ${playerCount} joueurs Premier League synchronisés.`);
   } catch (error) {
     setStatus("Synchronisation impossible depuis ce navigateur. Vérifie la clé API ou le blocage CORS.");
     if (!silent) alert("La synchronisation n'a pas fonctionné. Vérifie la clé API.");
     console.error(error);
+  }
+}
+
+async function syncPlayers(silent = false) {
+  try {
+    const response = await fetch(`/api/players?season=${seasonYear}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Erreur API ${response.status}`);
+    const data = await response.json();
+    state.playersByTeam = normalizePlayersByTeam(data.playersByTeam);
+    return Object.values(state.playersByTeam).reduce((sum, players) => sum + players.length, 0);
+  } catch (error) {
+    if (!silent) setStatus("Impossible d'importer la liste des joueurs.");
+    console.error(error);
+    return 0;
   }
 }
 
@@ -505,7 +522,7 @@ function bonusControlsHtml(category, role) {
   return `
     <span class="bonus-choice">
       <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team">${teamOptionsHtml()}</select>
-      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player" type="text" autocomplete="off" placeholder="Joueur" />
+      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player">${playerOptionsHtml("")}</select>
     </span>
   `;
 }
@@ -520,8 +537,23 @@ function teamOptionsHtml() {
 }
 
 function bonusTeamChoices() {
-  return [...new Set(state.matches.flatMap((match) => [match.teamA, match.teamB]).filter(Boolean))]
+  return [...new Set([
+    ...state.matches.flatMap((match) => [match.teamA, match.teamB]),
+    ...Object.keys(state.playersByTeam || {}),
+  ].filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+function playerOptionsHtml(team, selected = "") {
+  const players = state.playersByTeam?.[team] || [];
+  const options = ['<option value="">Choisir joueur</option>'];
+  players.forEach((player) => {
+    options.push(`<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`);
+  });
+  if (selected && !players.includes(selected)) {
+    options.push(`<option value="${escapeHtml(selected)}">${escapeHtml(selected)}</option>`);
+  }
+  return options.join("");
 }
 
 function setBonusControlsValue(row, category, role, value) {
@@ -531,8 +563,11 @@ function setBonusControlsValue(row, category, role, value) {
   }
 
   const { team, player } = splitBonusIndividualValue(value);
-  setSelectValue(row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`), team);
-  row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`).value = player;
+  const teamSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`);
+  const playerSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`);
+  setSelectValue(teamSelect, team);
+  playerSelect.innerHTML = playerOptionsHtml(team, player);
+  setSelectValue(playerSelect, player);
 }
 
 function setSelectValue(select, value) {
@@ -559,6 +594,13 @@ function splitBonusIndividualValue(value = "") {
   const parts = String(value).split(" - ");
   if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")) };
   return { team: "", player: clean(String(value)) };
+}
+
+function refreshBonusPlayerSelect(input) {
+  if (input.dataset.bonusPart !== "team" || !individualBonusIds.has(input.dataset.bonusId)) return;
+  const row = input.closest(".bonus-row");
+  const playerSelect = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="player"]`);
+  playerSelect.innerHTML = playerOptionsHtml(input.value);
 }
 
 function renderAdminControls() {
@@ -1535,8 +1577,13 @@ function mergeClientStates(localState, remoteState) {
     deletedUsers,
     users: userMerge.users,
     matches: mergeClientMatches(remoteState.matches, localState.matches, userMerge.aliases, deletedUsers),
+    playersByTeam: mergePlayersByTeam(remoteState.playersByTeam, localState.playersByTeam),
     seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus, userMerge.aliases, deletedUsers),
   };
+}
+
+function mergePlayersByTeam(remotePlayers = {}, localPlayers = {}) {
+  return normalizePlayersByTeam({ ...(remotePlayers || {}), ...(localPlayers || {}) });
 }
 
 function mergeClientUsers(remoteUsers = [], localUsers = [], deletedUsers = {}) {
@@ -1711,11 +1758,22 @@ function migrateState(raw) {
     predictions: raw.seasonBonus?.predictions ?? {},
   };
   next.deletedUsers = normalizeDeletedUsers(raw.deletedUsers);
+  next.playersByTeam = normalizePlayersByTeam(raw.playersByTeam);
   next.currentUserId = raw.currentUserId ?? null;
   next.matchdayFilter = raw.matchdayFilter ?? "all";
   next.lastSync = raw.lastSync ?? null;
   next.testMode = Boolean(raw.testMode) || localStorage.getItem(testModeStorageKey) === "true";
   return next;
+}
+
+function normalizePlayersByTeam(playersByTeam = {}) {
+  const normalized = {};
+  Object.entries(playersByTeam || {}).forEach(([team, players]) => {
+    if (!team) return;
+    normalized[team] = [...new Set((Array.isArray(players) ? players : []).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, "fr"));
+  });
+  return normalized;
 }
 
 function scoreInput(value) {
