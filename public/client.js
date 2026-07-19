@@ -1907,15 +1907,13 @@ function renderPointsDetail() {
 
 function renderPlayerStats() {
   els.playerStats.innerHTML = "";
-  els.overallStats.innerHTML = "";
+  if (els.overallStats) els.overallStats.innerHTML = "";
   els.statsCount.textContent = state.users.length;
 
   if (state.users.length === 0) {
     els.playerStats.innerHTML = '<p class="empty-state">Aucun joueur inscrit.</p>';
     return;
   }
-
-  renderOverallStats();
 
   const table = document.createElement("table");
   table.className = "leader-table stats-table";
@@ -1925,10 +1923,9 @@ function renderPlayerStats() {
         <th>Joueur</th>
         <th>Score exact</th>
         <th>Bon résultat</th>
+        <th>Bon écart</th>
         <th>Journées</th>
         <th>Oublis</th>
-        <th>Jaunes</th>
-        <th>Rouges</th>
         <th>Pén.</th>
         <th>Total</th>
       </tr>
@@ -1943,10 +1940,9 @@ function renderPlayerStats() {
       <td class="leader-player"><span class="user-identity"><strong></strong></span></td>
       <td>${stats.exactScores}</td>
       <td>${stats.goodResults}</td>
+      <td>${stats.goodDiffs}</td>
       <td>${stats.dayWins}</td>
       <td>${stats.missedPredictions}</td>
-      <td>${stats.yellowCards}</td>
-      <td>${stats.redCards}</td>
       <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td>
       <td class="leader-total"><strong>${stats.total} pts</strong></td>
     `;
@@ -1961,6 +1957,7 @@ function renderPlayerStats() {
 }
 
 function renderOverallStats() {
+  if (!els.overallStats) return;
   const rows = state.users.map((user) => ({ user, stats: playerStatsFor(user.id) }));
   const items = [
     { label: "Scores exacts", value: (row) => row.stats.exactScores, suffix: "scores" },
@@ -2168,11 +2165,16 @@ function playerStatsFor(userId) {
     const prediction = match.predictions[userId];
     return outcome(Number(match.result.a), Number(match.result.b)) === outcome(Number(prediction.a), Number(prediction.b));
   }).length;
+  const goodDiffs = predictedMatches.filter((match) => {
+    const prediction = match.predictions[userId];
+    return Number(match.result.a) - Number(match.result.b) === Number(prediction.a) - Number(prediction.b);
+  }).length;
 
   return {
     predictions: predictedMatches.length,
     exactScores,
     goodResults,
+    goodDiffs,
     dayWins,
     ...cards,
     matchPoints,
