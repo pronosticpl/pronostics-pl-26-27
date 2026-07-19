@@ -703,6 +703,7 @@ function renderLeaderboard() {
     nameCell.innerHTML = `<span class="rank-badge">${index + 1}</span>`;
     nameCell.append(avatarNode(user), document.createElement("strong"));
     nameCell.querySelector("strong").textContent = user.name;
+    nameCell.append(cardBadgesFor(user.id));
 
     const totalCell = document.createElement("td");
     totalCell.className = "leader-total";
@@ -750,6 +751,10 @@ function renderPlayerStats() {
         <span><b>${stats.exactScores}</b> scores exacts</span>
         <span><b>${stats.goodResults}</b> bons résultats</span>
         <span><b>${stats.dayWins}</b> journées gagnées</span>
+        <span><b>${stats.missedPredictions}</b> oublis</span>
+        <span><b>${stats.yellowCards}</b> jaunes</span>
+        <span><b>${stats.redCards}</b> rouges</span>
+        <span><b>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</b> pts pénalité</span>
         <span><b>${stats.matchPoints}</b> pts matchs</span>
         <span><b>${stats.seasonBonus}</b> pts bonus</span>
         <span><b>${stats.average}</b> pts/prono</span>
@@ -757,6 +762,7 @@ function renderPlayerStats() {
     `;
     card.querySelector(".user-identity").prepend(avatarNode(user));
     card.querySelector("h4").textContent = user.name;
+    card.querySelector(".user-identity").append(cardBadgesFor(user.id));
     els.playerStats.append(card);
   });
 }
@@ -776,13 +782,8 @@ function renderHeaderStats() {
 function standings() {
   const baseRows = state.users.map((user) => ({
     ...user,
-    points: state.matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0) + seasonBonusPointsFor(user.id),
+    points: playerStatsFor(user.id).total,
   }));
-
-  bonusByUser().forEach((bonus, userId) => {
-    const row = baseRows.find((user) => user.id === userId);
-    if (row) row.points += bonus;
-  });
 
   return baseRows.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
 }
@@ -821,14 +822,18 @@ function matchdayDetailFor(userId, day) {
   const best = allScores.length ? Math.max(...allScores) : 0;
   const winner = best > 0 && points === best;
   const winnerBonus = winner ? 3 : 0;
-  const total = points + winnerBonus;
+  const cards = matchdayCardDetailFor(userId, day);
+  const total = points + winnerBonus - cards.penaltyPoints;
+  const detailParts = [`${points}+${winnerBonus}`];
+  if (cards.penaltyPoints) detailParts.push(`-${cards.penaltyPoints}`);
   return {
     day,
     points,
     winner,
     winnerBonus,
+    ...cards,
     total,
-    html: total > 0 ? `<strong>${total} pts</strong><span>${points}+${winnerBonus}</span>` : "-",
+    html: total !== 0 || cards.missedPredictions ? `<strong>${total} pts</strong><span>${detailParts.join("")}</span>` : "-",
   };
 }
 
@@ -847,6 +852,7 @@ function playerStatsFor(userId) {
   const matchPoints = resultMatches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
   const dayWins = matchdayDetailsFor(userId).filter((detail) => detail.winner).length;
   const seasonBonus = seasonBonusPointsFor(userId);
+  const cards = cardSummaryFor(userId);
   const exactScores = predictedMatches.filter((match) => {
     const prediction = match.predictions[userId];
     return Number(match.result.a) === Number(prediction.a) && Number(match.result.b) === Number(prediction.b);
@@ -861,11 +867,53 @@ function playerStatsFor(userId) {
     exactScores,
     goodResults,
     dayWins,
+    ...cards,
     matchPoints,
     seasonBonus,
-    total: matchPoints + seasonBonus + dayWins * 3,
+    total: matchPoints + seasonBonus + dayWins * 3 - cards.penaltyPoints,
     average: predictedMatches.length ? (matchPoints / predictedMatches.length).toFixed(1) : "0.0",
   };
+}
+
+function cardSummaryFor(userId) {
+  return leaderboardDays().reduce((summary, day) => {
+    const detail = matchdayCardDetailFor(userId, day);
+    summary.missedPredictions += detail.missedPredictions;
+    summary.yellowCards += detail.yellowCards;
+    summary.redCards += detail.redCards;
+    summary.penaltyPoints += detail.penaltyPoints;
+    return summary;
+  }, { missedPredictions: 0, yellowCards: 0, redCards: 0, penaltyPoints: 0 });
+}
+
+function matchdayCardDetailFor(userId, day) {
+  const lockedMatches = state.matches.filter((match) => match.matchday === day && isMatchLocked(match));
+  const missedPredictions = lockedMatches.filter((match) => !hasScore(match.predictions[userId])).length;
+  const redCards = missedPredictions >= 2 ? 1 : 0;
+  const yellowCards = missedPredictions === 1 ? 1 : 0;
+  return {
+    missedPredictions,
+    yellowCards,
+    redCards,
+    penaltyPoints: redCards * 2,
+  };
+}
+
+function cardBadgesFor(userId) {
+  const cards = cardSummaryFor(userId);
+  const box = document.createElement("span");
+  box.className = "card-badges";
+  if (cards.yellowCards) box.append(cardBadge("yellow", cards.yellowCards));
+  if (cards.redCards) box.append(cardBadge("red", cards.redCards));
+  return box;
+}
+
+function cardBadge(type, count) {
+  const badge = document.createElement("span");
+  badge.className = `card-badge ${type}`;
+  badge.title = type === "red" ? `${count} carton rouge` : `${count} carton jaune`;
+  badge.textContent = count > 1 ? String(count) : "";
+  return badge;
 }
 
 function seasonBonusPointsFor(userId) {

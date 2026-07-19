@@ -427,6 +427,36 @@ select:focus {
   gap: 8px;
 }
 
+.card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.card-badge {
+  width: 12px;
+  height: 17px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 2px;
+  color: #fffdf8;
+  font-size: 0.56rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(24, 24, 22, 0.22);
+}
+
+.card-badge.yellow {
+  color: #2d2610;
+  background: #f4c84a;
+}
+
+.card-badge.red {
+  background: #c74d3f;
+}
+
 form button {
   color: #fffdf8;
   background: var(--green);
@@ -525,7 +555,7 @@ form button {
   font-weight: 850;
 }
 
-.leader-table td > span:not(.avatar):not(.rank-badge) {
+.leader-table td > span:not(.avatar):not(.rank-badge):not(.card-badges) {
   display: block;
   margin-top: 2px;
   color: var(--muted);
