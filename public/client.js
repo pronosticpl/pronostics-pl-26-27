@@ -1969,16 +1969,17 @@ function countdownLabel(targetDate) {
   if (Number.isNaN(targetDate.getTime())) return "Date à confirmer";
   if (diff <= 0) return "Championnat commencé";
 
-  const totalMinutes = Math.floor(diff / 60000);
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
-  return `${days} j ${hours} h ${minutes} min`;
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${days} j ${hours} h ${minutes} min ${seconds} s`;
 }
 
 function startCountdown() {
   if (countdownTimer) return;
-  countdownTimer = setInterval(renderHeaderStats, 30000);
+  countdownTimer = setInterval(renderHeaderStats, 1000);
 }
 
 function standings() {
