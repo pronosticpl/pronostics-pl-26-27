@@ -479,8 +479,10 @@ function renderSeasonBonus() {
     predictionInput.title = locked ? "Bonus verrouillé après le début du championnat" : "";
     const officialLabel = row.querySelector(".admin-only");
     const officialInput = row.querySelector('[data-role="official"]');
-    officialLabel.hidden = !isAdmin();
-    officialInput.disabled = !isAdmin();
+    officialLabel.hidden = false;
+    officialInput.readOnly = !isAdmin();
+    officialInput.disabled = false;
+    officialInput.title = isAdmin() ? "" : "Réponse officielle modifiable uniquement par l'admin";
     officialInput.value = state.seasonBonus.official[category.id] ?? "";
     els.seasonBonusList.append(row);
   });
