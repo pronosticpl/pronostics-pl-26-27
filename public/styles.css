@@ -537,7 +537,11 @@ form button {
 }
 
 .leader-player {
-  min-width: 120px;
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -556,6 +560,8 @@ form button {
 
 .leader-player strong {
   color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .leader-total,
@@ -1153,6 +1159,20 @@ form button {
 
   .leader-table {
     min-width: 520px;
+  }
+
+  .leader-player {
+    width: 82px;
+    min-width: 82px;
+    max-width: 82px;
+  }
+
+  .leader-player .rank-badge {
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    border-radius: 7px;
+    font-size: 0.68rem;
   }
 
   .match-head,
