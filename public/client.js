@@ -522,7 +522,8 @@ function bonusControlsHtml(category, role) {
   return `
     <span class="bonus-choice">
       <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team">${teamOptionsHtml()}</select>
-      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player">${playerOptionsHtml("")}</select>
+      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player" type="text" autocomplete="off" list="${bonusPlayerListId(role, category.id)}" placeholder="Joueur" />
+      <datalist id="${bonusPlayerListId(role, category.id)}">${playerOptionsHtml("")}</datalist>
     </span>
   `;
 }
@@ -546,14 +547,18 @@ function bonusTeamChoices() {
 
 function playerOptionsHtml(team, selected = "") {
   const players = state.playersByTeam?.[team] || [];
-  const options = ['<option value="">Choisir joueur</option>'];
+  const options = [];
   players.forEach((player) => {
-    options.push(`<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`);
+    options.push(`<option value="${escapeHtml(player)}"></option>`);
   });
   if (selected && !players.includes(selected)) {
-    options.push(`<option value="${escapeHtml(selected)}">${escapeHtml(selected)}</option>`);
+    options.push(`<option value="${escapeHtml(selected)}"></option>`);
   }
   return options.join("");
+}
+
+function bonusPlayerListId(role, bonusId) {
+  return `players-${role}-${bonusId}`;
 }
 
 function setBonusControlsValue(row, category, role, value) {
@@ -564,10 +569,11 @@ function setBonusControlsValue(row, category, role, value) {
 
   const { team, player } = splitBonusIndividualValue(value);
   const teamSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`);
-  const playerSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`);
+  const playerInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`);
+  const playerList = row.querySelector(`#${bonusPlayerListId(role, category.id)}`);
   setSelectValue(teamSelect, team);
-  playerSelect.innerHTML = playerOptionsHtml(team, player);
-  setSelectValue(playerSelect, player);
+  playerList.innerHTML = playerOptionsHtml(team, player);
+  playerInput.value = player;
 }
 
 function setSelectValue(select, value) {
@@ -599,8 +605,10 @@ function splitBonusIndividualValue(value = "") {
 function refreshBonusPlayerSelect(input) {
   if (input.dataset.bonusPart !== "team" || !individualBonusIds.has(input.dataset.bonusId)) return;
   const row = input.closest(".bonus-row");
-  const playerSelect = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="player"]`);
-  playerSelect.innerHTML = playerOptionsHtml(input.value);
+  const playerInput = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="player"]`);
+  const playerList = row.querySelector(`#${bonusPlayerListId(input.dataset.role, input.dataset.bonusId)}`);
+  playerInput.value = "";
+  playerList.innerHTML = playerOptionsHtml(input.value);
 }
 
 function renderAdminControls() {
