@@ -917,6 +917,7 @@ let autoSyncTimer = null;
 let currentUserId = localStorage.getItem(sessionUserStorageKey);
 let remoteSaveTimer = null;
 let remoteRefreshTimer = null;
+let countdownTimer = null;
 let lastLocalChangeAt = 0;
 if (removeDemoMatches()) {
   localStorage.setItem(storageKey, JSON.stringify(state));
@@ -1951,15 +1952,33 @@ function formatStatValue(value, decimals = 0) {
 }
 
 function renderHeaderStats() {
-  const upcoming = sortedMatches().find((match) => !hasResult(match));
-  if (!upcoming) {
-    els.nextMatchLabel.textContent = state.matches.length ? "Résultats à jour" : "Aucun match";
-    els.nextMatchTeams.textContent = state.matches.length ? "Classement calculé" : "Importe la saison 26-27";
+  const firstMatch = sortedMatches().find((match) => match.date);
+  if (!firstMatch) {
+    els.nextMatchLabel.textContent = "Début du championnat";
+    els.nextMatchTeams.textContent = "Importe la saison 26-27";
     return;
   }
 
-  els.nextMatchLabel.textContent = upcoming.date ? formatDate(upcoming.date) : "Prochain match";
-  els.nextMatchTeams.textContent = `${upcoming.teamA} - ${upcoming.teamB}`;
+  const kickoff = new Date(firstMatch.date);
+  els.nextMatchLabel.textContent = "Début du championnat";
+  els.nextMatchTeams.textContent = countdownLabel(kickoff);
+}
+
+function countdownLabel(targetDate) {
+  const diff = targetDate.getTime() - Date.now();
+  if (Number.isNaN(targetDate.getTime())) return "Date à confirmer";
+  if (diff <= 0) return "Championnat commencé";
+
+  const totalMinutes = Math.floor(diff / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  return `${days} j ${hours} h ${minutes} min`;
+}
+
+function startCountdown() {
+  if (countdownTimer) return;
+  countdownTimer = setInterval(renderHeaderStats, 30000);
 }
 
 function standings() {
@@ -2890,6 +2909,7 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
+startCountdown();
 ensurePlayersLoaded();
 ensureAutoSync();
 loadRemoteState();
