@@ -84,7 +84,7 @@ function readBody(request) {
     let body = "";
     request.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 500000) {
+      if (body.length > 2000000) {
         request.destroy();
         reject(new Error("Requête trop grande"));
       }
