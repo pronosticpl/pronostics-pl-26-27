@@ -82,6 +82,7 @@ const els = {
   seasonBonusList: document.querySelector("#seasonBonusList"),
   seasonBonusTotal: document.querySelector("#seasonBonusTotal"),
   playerStats: document.querySelector("#playerStats"),
+  overallStats: document.querySelector("#overallStats"),
   statsCount: document.querySelector("#statsCount"),
   nextMatchLabel: document.querySelector("#nextMatchLabel"),
   nextMatchTeams: document.querySelector("#nextMatchTeams"),
@@ -744,12 +745,15 @@ function renderLeaderboard() {
 
 function renderPlayerStats() {
   els.playerStats.innerHTML = "";
+  els.overallStats.innerHTML = "";
   els.statsCount.textContent = state.users.length;
 
   if (state.users.length === 0) {
     els.playerStats.innerHTML = '<p class="empty-state">Aucun joueur inscrit.</p>';
     return;
   }
+
+  renderOverallStats();
 
   standings().forEach((user) => {
     const stats = playerStatsFor(user.id);
@@ -779,6 +783,37 @@ function renderPlayerStats() {
     card.querySelector(".user-identity").append(cardBadgesFor(user.id));
     els.playerStats.append(card);
   });
+}
+
+function renderOverallStats() {
+  const rows = state.users.map((user) => ({ user, stats: playerStatsFor(user.id) }));
+  const items = [
+    { label: "Plus de pronos", value: (row) => row.stats.predictions, suffix: "pronos" },
+    { label: "Scores exacts", value: (row) => row.stats.exactScores, suffix: "scores" },
+    { label: "Bons résultats", value: (row) => row.stats.goodResults, suffix: "résultats" },
+    { label: "Journées gagnées", value: (row) => row.stats.dayWins, suffix: "journées" },
+    { label: "Meilleure moyenne", value: (row) => Number(row.stats.average), suffix: "pts/prono", decimals: 1 },
+    { label: "Moins d'oublis", value: (row) => row.stats.missedPredictions, suffix: "oublis", lowest: true },
+    { label: "Plus de pénalités", value: (row) => row.stats.penaltyPoints, suffix: "pts", penalty: true },
+  ];
+
+  items.forEach((item) => {
+    const value = item.lowest
+      ? Math.min(...rows.map(item.value))
+      : Math.max(...rows.map(item.value));
+    const leaders = rows.filter((row) => item.value(row) === value);
+    const article = document.createElement("article");
+    article.className = "overall-stat";
+    article.innerHTML = `<span></span><strong></strong><small></small>`;
+    article.querySelector("span").textContent = item.label;
+    article.querySelector("strong").textContent = item.penalty && value ? `-${value}` : formatStatValue(value, item.decimals);
+    article.querySelector("small").textContent = `${leaders.map((row) => row.user.name).join(", ")} · ${item.suffix}`;
+    els.overallStats.append(article);
+  });
+}
+
+function formatStatValue(value, decimals = 0) {
+  return decimals ? Number(value).toFixed(decimals) : String(value);
 }
 
 function renderHeaderStats() {
