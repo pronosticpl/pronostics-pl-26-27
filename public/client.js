@@ -1917,34 +1917,47 @@ function renderPlayerStats() {
 
   renderOverallStats();
 
+  const table = document.createElement("table");
+  table.className = "leader-table stats-table";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Joueur</th>
+        <th>Score exact</th>
+        <th>Bon résultat</th>
+        <th>Journées</th>
+        <th>Oublis</th>
+        <th>Jaunes</th>
+        <th>Rouges</th>
+        <th>Pén.</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+  `;
+
+  const body = document.createElement("tbody");
   standings().forEach((user) => {
-    const stats = playerStatsFor(user.id);
-    const card = document.createElement("article");
-    card.className = "stat-card";
-    card.innerHTML = `
-      <div class="stat-title">
-        <div class="user-identity"><h4></h4></div>
-        <strong>${stats.total} pts</strong>
-      </div>
-      <div class="stat-grid">
-        <span><b>${stats.predictions}</b> pronos</span>
-        <span><b>${stats.exactScores}</b> scores exacts</span>
-        <span><b>${stats.goodResults}</b> bons résultats</span>
-        <span><b>${stats.dayWins}</b> journées gagnées</span>
-        <span><b>${stats.missedPredictions}</b> oublis</span>
-        <span><b>${stats.yellowCards}</b> jaunes</span>
-        <span><b>${stats.redCards}</b> rouges</span>
-        <span><b>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</b> pts pénalité</span>
-        <span><b>${stats.matchPoints}</b> pts matchs</span>
-        <span><b>${stats.seasonBonus}</b> pts bonus</span>
-        <span><b>${stats.average}</b> pts/prono</span>
-      </div>
+    const stats = user.stats;
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td class="leader-player"><span class="user-identity"><strong></strong></span></td>
+      <td>${stats.exactScores}</td>
+      <td>${stats.goodResults}</td>
+      <td>${stats.dayWins}</td>
+      <td>${stats.missedPredictions}</td>
+      <td>${stats.yellowCards}</td>
+      <td>${stats.redCards}</td>
+      <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td>
+      <td class="leader-total"><strong>${stats.total} pts</strong></td>
     `;
-    card.querySelector(".user-identity").prepend(avatarNode(user));
-    card.querySelector("h4").textContent = user.name;
-    card.querySelector(".user-identity").append(cardBadgesFor(user.id));
-    els.playerStats.append(card);
+    const identity = row.querySelector(".user-identity");
+    identity.prepend(avatarNode(user));
+    identity.querySelector("strong").textContent = user.name;
+    identity.append(cardBadgesFor(user.id));
+    body.append(row);
   });
+  table.append(body);
+  els.playerStats.append(table);
 }
 
 function renderOverallStats() {

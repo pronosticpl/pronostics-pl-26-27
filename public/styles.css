@@ -728,9 +728,7 @@ form button {
 }
 
 .player-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 12px;
+  overflow-x: auto;
 }
 
 .overall-stats {
@@ -776,47 +774,8 @@ form button {
   overflow-wrap: anywhere;
 }
 
-.stat-card {
-  display: grid;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid rgba(222, 215, 200, 0.86);
-  border-radius: 8px;
-  background: #fffdf8;
-}
-
-.stat-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.stat-title h4 {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.stat-title strong {
-  color: var(--amber);
-}
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
-.stat-grid span {
-  padding: 7px;
-  border-radius: 8px;
-  background: #f7f2e8;
-}
-
-.stat-grid b {
-  color: var(--green);
+.stats-table {
+  min-width: 760px;
 }
 
 .public-bonus {
@@ -1180,14 +1139,6 @@ form button {
 
   .leader-table {
     min-width: 520px;
-  }
-
-  .player-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .stat-grid {
-    grid-template-columns: 1fr;
   }
 
   .match-head,
