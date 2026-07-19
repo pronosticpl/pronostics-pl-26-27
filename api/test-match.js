@@ -10,29 +10,52 @@ module.exports = async function handler(request, response) {
   const competition = request.query?.competition || "WC";
   const season = request.query?.season || "2022";
   const stage = request.query?.stage || "FINAL";
-  const params = new URLSearchParams({ season, stage });
-  const apiUrl = `https://api.football-data.org/v4/competitions/${encodeURIComponent(competition)}/matches?${params}`;
+  const urls = [
+    apiUrlFor(competition, { season, stage }),
+    apiUrlFor(competition, { season }),
+  ];
 
   try {
-    const apiResponse = await fetch(apiUrl, { headers: { "X-Auth-Token": token } });
-    const payload = await apiResponse.json();
-    if (!apiResponse.ok) {
-      sendJson(response, apiResponse.status, payload);
+    const result = await firstOfficialMatch(urls, token, stage);
+
+    if (!result.ok) {
+      sendJson(response, result.status, result.payload);
       return;
     }
 
-    const match = (payload.matches || []).find((candidate) => {
-      const fullTime = candidate.score?.fullTime ?? {};
-      return Number.isInteger(fullTime.home) && Number.isInteger(fullTime.away);
-    });
-
-    if (!match) {
-      sendJson(response, 404, { error: "Aucun résultat officiel trouvé pour ce test." });
-      return;
-    }
-
-    sendJson(response, 200, { match });
+    sendJson(response, 200, { match: result.match });
   } catch {
     sendJson(response, 502, { error: "Impossible de contacter football-data.org." });
   }
 };
+
+function apiUrlFor(competition, params) {
+  return `https://api.football-data.org/v4/competitions/${encodeURIComponent(competition)}/matches?${new URLSearchParams(params)}`;
+}
+
+async function firstOfficialMatch(urls, token, stage) {
+  let lastStatus = 404;
+  let lastPayload = { error: "Aucun résultat officiel trouvé pour ce test." };
+
+  for (const url of urls) {
+    const apiResponse = await fetch(url, { headers: { "X-Auth-Token": token } });
+    const payload = await apiResponse.json();
+    if (!apiResponse.ok) {
+      lastStatus = apiResponse.status;
+      lastPayload = payload;
+      continue;
+    }
+
+    const matches = payload.matches || [];
+    const match = matches.find((candidate) => isOfficialMatch(candidate) && (!stage || candidate.stage === stage)) ||
+      matches.find(isOfficialMatch);
+    if (match) return { ok: true, match };
+  }
+
+  return { ok: false, status: lastStatus, payload: lastPayload };
+}
+
+function isOfficialMatch(match) {
+  const fullTime = match.score?.fullTime ?? {};
+  return Number.isInteger(fullTime.home) && Number.isInteger(fullTime.away);
+}
