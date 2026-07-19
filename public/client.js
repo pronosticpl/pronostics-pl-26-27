@@ -340,8 +340,11 @@ async function syncPlayers(silent = false) {
     const response = await fetch(`/api/players?season=${seasonYear}`, { cache: "no-store" });
     if (!response.ok) throw new Error(`Erreur API ${response.status}`);
     const data = await response.json();
-    state.playersByTeam = normalizePlayersByTeam(data.playersByTeam);
-    return Object.values(state.playersByTeam).reduce((sum, players) => sum + players.length, 0);
+    const importedPlayers = normalizePlayersByTeam(data.playersByTeam);
+    const playerCount = Object.values(importedPlayers).reduce((sum, players) => sum + players.length, 0);
+    if (playerCount > 0) state.playersByTeam = importedPlayers;
+    if (playerCount === 0 && !silent) setStatus("Aucun joueur reçu de football-data. Tu peux écrire le nom à la main.");
+    return playerCount;
   } catch (error) {
     if (!silent) setStatus("Impossible d'importer la liste des joueurs.");
     console.error(error);
@@ -520,14 +523,24 @@ function bonusControlsHtml(category, role) {
   }
 
   if (!individualBonusIds.has(category.id)) {
-    return `<select data-role="${role}" data-bonus-id="${category.id}">${teamOptionsHtml()}</select>`;
+    return `
+      <input data-role="${role}" data-bonus-id="${category.id}" type="text" autocomplete="off" list="${bonusTeamListId(role, category.id)}" placeholder="Equipe" />
+      <datalist id="${bonusTeamListId(role, category.id)}">${teamOptionsHtml()}</datalist>
+    `;
   }
 
   return `
     <span class="bonus-choice">
-      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team">${teamOptionsHtml()}</select>
-      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player" type="text" autocomplete="off" list="${bonusPlayerListId(role, category.id)}" placeholder="Joueur" />
-      <datalist id="${bonusPlayerListId(role, category.id)}">${playerOptionsHtml("")}</datalist>
+      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team" type="text" autocomplete="off" list="${bonusTeamListId(role, category.id)}" placeholder="Equipe" />
+      <datalist id="${bonusTeamListId(role, category.id)}">${teamOptionsHtml()}</datalist>
+      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player">
+        ${playerSelectOptionsHtml("", "")}
+      </select>
+      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="playerCustom" type="text" autocomplete="off" placeholder="Joueur libre si absent" />
+      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="replacement">
+        ${playerSelectOptionsHtml("", "")}
+      </select>
+      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="replacementCustom" type="text" autocomplete="off" placeholder="Remplaçant libre si absent" />
     </span>
   `;
 }
@@ -536,21 +549,18 @@ function teamOptionsHtml() {
   const teams = bonusTeamChoices();
   const options = ['<option value="">Choisir équipe</option>'];
   teams.forEach((team) => {
-    options.push(`<option value="${escapeHtml(team)}">${escapeHtml(team)}</option>`);
+    options.push(`<option value="${escapeHtml(team)}"></option>`);
   });
   return options.join("");
 }
 
 function bonusTeamChoices() {
-  return [...new Set([
-    ...state.matches.flatMap((match) => [match.teamA, match.teamB]),
-    ...Object.keys(state.playersByTeam || {}),
-  ].filter(Boolean))]
+  return [...new Set(state.matches.flatMap((match) => [match.teamA, match.teamB]).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "fr"));
 }
 
 function playerOptionsHtml(team, selected = "") {
-  const players = state.playersByTeam?.[team] || [];
+  const players = playersForTeam(team);
   const options = [];
   players.forEach((player) => {
     options.push(`<option value="${escapeHtml(player)}"></option>`);
@@ -561,40 +571,86 @@ function playerOptionsHtml(team, selected = "") {
   return options.join("");
 }
 
+function playerSelectOptionsHtml(team, selected = "") {
+  const players = playersForTeam(team);
+  const options = ['<option value="">Choisir joueur</option>'];
+  players.forEach((player) => {
+    options.push(`<option value="${escapeHtml(player)}"${same(player, selected) ? " selected" : ""}>${escapeHtml(player)}</option>`);
+  });
+  options.push(`<option value="__custom__"${selected && !players.some((player) => same(player, selected)) ? " selected" : ""}>Autre joueur</option>`);
+  return options.join("");
+}
+
+function playersForTeam(team) {
+  const keys = teamLookupKeys(team);
+  const players = keys.flatMap((key) => state.playersByTeam?.[key] || []);
+  return [...new Set(players)].sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+function teamLookupKeys(team) {
+  const aliases = {
+    Arsenal: ["Arsenal FC"],
+    "Arsenal FC": ["Arsenal"],
+    Bournemouth: ["AFC Bournemouth"],
+    "AFC Bournemouth": ["Bournemouth"],
+    Brighton: ["Brighton & Hove Albion"],
+    "Brighton & Hove Albion": ["Brighton"],
+    Ipswich: ["Ipswich Town"],
+    "Ipswich Town": ["Ipswich"],
+    Leeds: ["Leeds United"],
+    "Leeds United": ["Leeds"],
+    Liverpool: ["Liverpool FC"],
+    "Liverpool FC": ["Liverpool"],
+    "Man City": ["Manchester City"],
+    "Manchester City": ["Man City"],
+    "Man United": ["Manchester United"],
+    "Manchester United": ["Man United"],
+    Newcastle: ["Newcastle United"],
+    "Newcastle United": ["Newcastle"],
+    Nottingham: ["Nottingham Forest"],
+    "Nottingham Forest": ["Nottingham"],
+    Tottenham: ["Tottenham Hotspur"],
+    "Tottenham Hotspur": ["Tottenham"],
+  };
+  const keys = new Set([team]);
+  if (aliases[team]) aliases[team].forEach((alias) => keys.add(alias));
+  if (team) {
+    keys.add(team.replace(/\s+FC$/i, "").replace(/^AFC\s+/i, "").trim());
+  }
+  return [...keys].filter(Boolean);
+}
+
 function bonusPlayerListId(role, bonusId) {
   return `players-${role}-${bonusId}`;
+}
+
+function bonusTeamListId(role, bonusId) {
+  return `teams-${role}-${bonusId}`;
 }
 
 function setBonusControlsValue(row, category, role, value) {
   const directInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]:not([data-bonus-part])`);
   if (directInput) {
-    if (directInput.tagName === "SELECT") {
-      setSelectValue(directInput, value);
-    } else {
-      directInput.value = value;
-    }
+    directInput.value = value;
     return;
   }
 
   if (!individualBonusIds.has(category.id)) {
-    setSelectValue(row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]`), value);
+    row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]`).value = value;
     return;
   }
 
-  const { team, player } = splitBonusIndividualValue(value);
-  const teamSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`);
-  const playerInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`);
-  const playerList = row.querySelector(`#${bonusPlayerListId(role, category.id)}`);
-  setSelectValue(teamSelect, team);
-  playerList.innerHTML = playerOptionsHtml(team, player);
-  playerInput.value = player;
-}
-
-function setSelectValue(select, value) {
-  if (value && ![...select.options].some((option) => option.value === value)) {
-    select.append(new Option(value, value));
-  }
-  select.value = value;
+  const { team, player, replacement } = splitBonusIndividualValue(value);
+  const teamInput = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`);
+  const playerSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`);
+  const playerCustom = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="playerCustom"]`);
+  const replacementSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="replacement"]`);
+  const replacementCustom = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="replacementCustom"]`);
+  teamInput.value = team;
+  playerSelect.innerHTML = playerSelectOptionsHtml(team, player);
+  replacementSelect.innerHTML = playerSelectOptionsHtml(team, replacement);
+  playerCustom.value = playerSelect.value === "__custom__" ? player : "";
+  replacementCustom.value = replacementSelect.value === "__custom__" ? replacement : "";
 }
 
 function bonusValueFromControls(input) {
@@ -604,26 +660,39 @@ function bonusValueFromControls(input) {
   if (!individualBonusIds.has(bonusId)) return clean(input.value);
 
   const team = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="team"]`)?.value ?? "");
-  const player = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="player"]`)?.value ?? "");
+  const player = bonusPlayerChoice(row, role, bonusId, "player");
+  const replacement = bonusPlayerChoice(row, role, bonusId, "replacement");
   if (!team && !player) return "";
   if (!team) return player;
-  if (!player) return team;
-  return `${team} - ${player}`;
+  const mainChoice = player ? `${team} - ${player}` : team;
+  return replacement ? `${mainChoice} | remplaçant: ${replacement}` : mainChoice;
 }
 
 function splitBonusIndividualValue(value = "") {
-  const parts = String(value).split(" - ");
-  if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")) };
-  return { team: "", player: clean(String(value)) };
+  const [mainValue, replacementValue = ""] = String(value).split("| remplaçant:");
+  const parts = mainValue.split(" - ");
+  const replacement = clean(replacementValue);
+  if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")), replacement };
+  return { team: "", player: clean(mainValue), replacement };
 }
 
 function refreshBonusPlayerSelect(input) {
   if (input.dataset.bonusPart !== "team" || !individualBonusIds.has(input.dataset.bonusId)) return;
   const row = input.closest(".bonus-row");
-  const playerInput = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="player"]`);
-  const playerList = row.querySelector(`#${bonusPlayerListId(input.dataset.role, input.dataset.bonusId)}`);
-  playerInput.value = "";
-  playerList.innerHTML = playerOptionsHtml(input.value);
+  ["player", "replacement"].forEach((part) => {
+    const select = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="${part}"]`);
+    const custom = row.querySelector(`[data-role="${input.dataset.role}"][data-bonus-id="${input.dataset.bonusId}"][data-bonus-part="${part}Custom"]`);
+    select.innerHTML = playerSelectOptionsHtml(input.value);
+    select.value = "";
+    custom.value = "";
+  });
+}
+
+function bonusPlayerChoice(row, role, bonusId, part) {
+  const selectValue = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="${part}"]`)?.value ?? "");
+  const customValue = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="${part}Custom"]`)?.value ?? "");
+  if (selectValue === "__custom__") return customValue;
+  return customValue || selectValue;
 }
 
 function renderAdminControls() {
@@ -1139,7 +1208,17 @@ function seasonBonusCategoryPoints(userId, category) {
   const prediction = state.seasonBonus.predictions[userId]?.[category.id] ?? "";
   const official = state.seasonBonus.official[category.id] ?? "";
   if (!prediction || !official) return 0;
+  if (individualBonusIds.has(category.id)) {
+    return individualBonusMatchesOfficial(prediction, official) ? category.points : 0;
+  }
   return same(prediction, official) ? category.points : 0;
+}
+
+function individualBonusMatchesOfficial(prediction, official) {
+  const { player, replacement } = splitBonusIndividualValue(prediction);
+  const officialParts = splitBonusIndividualValue(official);
+  const officialPlayer = officialParts.player || officialParts.replacement || official;
+  return [player, replacement].filter(Boolean).some((candidate) => same(candidate, officialPlayer) || same(candidate, official));
 }
 
 function pointsFor(match, userId) {
