@@ -17,6 +17,7 @@ const seasonBonusCategories = [
   { id: "goldenGloves", label: "Meilleur gardien", points: 3 },
   { id: "bestPlayer", label: "Meilleur joueur", points: 3 },
 ];
+const individualBonusIds = new Set(["topScorer", "bestAssister", "goldenGloves", "bestPlayer"]);
 
 const defaultState = {
   users: [],
@@ -226,10 +227,11 @@ els.refreshStateBtn.addEventListener("click", async () => {
 els.seasonBonusList.addEventListener("change", (event) => {
   const input = event.target.closest("[data-bonus-id]");
   if (!input) return;
+  const value = bonusValueFromControls(input);
 
   if (input.dataset.role === "official") {
     if (!isAdmin()) return;
-    state.seasonBonus.official[input.dataset.bonusId] = clean(input.value);
+    state.seasonBonus.official[input.dataset.bonusId] = value;
   } else {
     if (isSeasonLocked() && !state.testMode) {
       alert("Les bonus saison sont verrouillés après le début du championnat.");
@@ -239,7 +241,7 @@ els.seasonBonusList.addEventListener("change", (event) => {
     const user = currentUser();
     if (!user) return;
     state.seasonBonus.predictions[user.id] = state.seasonBonus.predictions[user.id] ?? {};
-    state.seasonBonus.predictions[user.id][input.dataset.bonusId] = clean(input.value);
+    state.seasonBonus.predictions[user.id][input.dataset.bonusId] = value;
   }
 
   persist();
@@ -465,32 +467,98 @@ function renderSeasonBonus() {
       </div>
       <label>
         Ton choix
-        <input data-role="prediction" data-bonus-id="${category.id}" type="text" autocomplete="off" />
+        ${bonusControlsHtml(category, "prediction")}
       </label>
       <label class="admin-only">
         Réponse officielle
-        <input data-role="official" data-bonus-id="${category.id}" type="text" autocomplete="off" />
+        ${bonusControlsHtml(category, "official")}
       </label>
       <b>${seasonBonusCategoryPoints(user.id, category)} pts</b>
     `;
 
-    const predictionInput = row.querySelector('[data-role="prediction"]');
-    predictionInput.value = userBonus[category.id] ?? "";
-    predictionInput.disabled = predictionLocked;
-    predictionInput.title = predictionLocked ? "Bonus verrouillé après le début du championnat" : "";
+    setBonusControlsValue(row, category, "prediction", userBonus[category.id] ?? "");
+    row.querySelectorAll('[data-role="prediction"]').forEach((input) => {
+      input.disabled = predictionLocked;
+      input.title = predictionLocked ? "Bonus verrouillé après le début du championnat" : "";
+    });
     const officialLabel = row.querySelector(".admin-only");
-    const officialInput = row.querySelector('[data-role="official"]');
     officialLabel.hidden = false;
-    officialInput.readOnly = !isAdmin();
-    officialInput.disabled = false;
-    officialInput.title = isAdmin() ? "" : "Réponse officielle modifiable uniquement par l'admin";
-    officialInput.value = state.seasonBonus.official[category.id] ?? "";
+    setBonusControlsValue(row, category, "official", state.seasonBonus.official[category.id] ?? "");
+    row.querySelectorAll('[data-role="official"]').forEach((input) => {
+      input.disabled = !isAdmin() && input.tagName === "SELECT";
+      input.readOnly = !isAdmin() && input.tagName !== "SELECT";
+      input.title = isAdmin() ? "" : "Réponse officielle modifiable uniquement par l'admin";
+    });
     els.seasonBonusList.append(row);
   });
 
   if (locked) {
     els.seasonBonusList.append(renderPublicSeasonBonus());
   }
+}
+
+function bonusControlsHtml(category, role) {
+  if (!individualBonusIds.has(category.id)) {
+    return `<select data-role="${role}" data-bonus-id="${category.id}">${teamOptionsHtml()}</select>`;
+  }
+
+  return `
+    <span class="bonus-choice">
+      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team">${teamOptionsHtml()}</select>
+      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player" type="text" autocomplete="off" placeholder="Joueur" />
+    </span>
+  `;
+}
+
+function teamOptionsHtml() {
+  const teams = bonusTeamChoices();
+  const options = ['<option value="">Choisir équipe</option>'];
+  teams.forEach((team) => {
+    options.push(`<option value="${escapeHtml(team)}">${escapeHtml(team)}</option>`);
+  });
+  return options.join("");
+}
+
+function bonusTeamChoices() {
+  return [...new Set(state.matches.flatMap((match) => [match.teamA, match.teamB]).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+function setBonusControlsValue(row, category, role, value) {
+  if (!individualBonusIds.has(category.id)) {
+    setSelectValue(row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"]`), value);
+    return;
+  }
+
+  const { team, player } = splitBonusIndividualValue(value);
+  setSelectValue(row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="team"]`), team);
+  row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="player"]`).value = player;
+}
+
+function setSelectValue(select, value) {
+  if (value && ![...select.options].some((option) => option.value === value)) {
+    select.append(new Option(value, value));
+  }
+  select.value = value;
+}
+
+function bonusValueFromControls(input) {
+  const row = input.closest(".bonus-row");
+  const { role, bonusId } = input.dataset;
+  if (!individualBonusIds.has(bonusId)) return clean(input.value);
+
+  const team = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="team"]`)?.value ?? "");
+  const player = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="player"]`)?.value ?? "");
+  if (!team && !player) return "";
+  if (!team) return player;
+  if (!player) return team;
+  return `${team} - ${player}`;
+}
+
+function splitBonusIndividualValue(value = "") {
+  const parts = String(value).split(" - ");
+  if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")) };
+  return { team: "", player: clean(String(value)) };
 }
 
 function renderAdminControls() {
@@ -1691,6 +1759,16 @@ function outcome(a, b) {
 
 function clean(value) {
   return value.trim().replace(/\s+/g, " ");
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[character]);
 }
 
 function same(a, b) {

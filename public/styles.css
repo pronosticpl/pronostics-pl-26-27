@@ -667,9 +667,15 @@ form button {
   background: rgba(31, 90, 58, 0.1);
 }
 
-.bonus-row input {
+.bonus-row input,
+.bonus-row select {
   width: 100%;
   min-width: 0;
+}
+
+.bonus-choice {
+  display: grid;
+  gap: 6px;
 }
 
 .bonus-row.is-locked input {
@@ -1120,7 +1126,8 @@ form button {
     grid-template-columns: 1fr;
   }
 
-  .bonus-row input {
+  .bonus-row input,
+  .bonus-row select {
     min-height: 48px;
     font-size: 16px;
   }
