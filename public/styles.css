@@ -573,6 +573,13 @@ form button {
   font-size: 0.9rem;
 }
 
+.rules-page {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .rules strong {
   color: var(--ink);
 }
@@ -1081,7 +1088,8 @@ form button {
   }
 
   body[data-mobile-tab="stats"] .dashboard,
-  body[data-mobile-tab="bonus"] .dashboard {
+  body[data-mobile-tab="bonus"] .dashboard,
+  body[data-mobile-tab="rules"] .dashboard {
     display: none;
   }
 
@@ -1095,7 +1103,8 @@ form button {
 
   .dashboard,
   .bonus-section,
-  .stats-section {
+  .stats-section,
+  .rules-section {
     padding: 14px 12px 28px;
   }
 

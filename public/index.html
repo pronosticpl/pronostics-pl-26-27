@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Pronostics PL" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260719-1900" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260719-1900" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260719-1900" />
-    <link rel="stylesheet" href="styles.css?v=20260719-1900" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260719-1930" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260719-1930" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260719-1930" />
+    <link rel="stylesheet" href="styles.css?v=20260719-1930" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
@@ -65,6 +65,7 @@
           <button class="mobile-tab" type="button" data-mobile-tab="standing">Classement</button>
           <button class="mobile-tab" type="button" data-mobile-tab="stats">Stats</button>
           <button class="mobile-tab" type="button" data-mobile-tab="bonus">Bonus</button>
+          <button class="mobile-tab" type="button" data-mobile-tab="rules">Règlement</button>
           <button class="mobile-tab" type="button" data-mobile-tab="login">Connexion</button>
         </nav>
 
@@ -139,38 +140,6 @@
               <span id="matchCount" hidden>0</span>
             </div>
             <div class="leaderboard" id="leaderboard"></div>
-            <div class="rules">
-              <strong>Barème</strong>
-              <span>1 pt par score d'équipe trouvé</span>
-              <span>+2 pts bon écart de buts</span>
-              <span>+2 pts bon résultat</span>
-              <span>+2 pts score exact</span>
-              <span>+3 pts vainqueur de journée</span>
-              <span>1 oubli de pronostic : carton jaune</span>
-              <span>2 oublis au total : carton rouge et -2 pts</span>
-              <span>Les oublis se cumulent même sur plusieurs journées</span>
-              <span>Maximum 1 carton rouge par journée</span>
-              <strong>Bonus saison</strong>
-              <span>10 pts champion</span>
-              <span>5 pts meilleure attaque</span>
-              <span>5 pts meilleure défense</span>
-              <span>3 pts meilleur buteur</span>
-              <span>3 pts meilleur passeur</span>
-              <span>3 pts meilleur gardien</span>
-              <span>3 pts meilleur joueur</span>
-              <strong>Prize money</strong>
-              <span>1er : 40 francs x nombre de participants</span>
-              <span>2eme : repas et boisson offerte max 50 francs, par tous présents ou non au repas</span>
-              <span>3eme : boisson offerte max 20 francs, par tous présents ou non au repas</span>
-              <strong>Règlement pronostics</strong>
-              <span>Avant le début du match : personne ne voit les pronostics des autres joueurs.</span>
-              <span>Même l'admin norbert ne les voit pas avant le début.</span>
-              <span>Dès que l'heure du match est passée : le pronostic est bloqué.</span>
-              <span>Après le début du match : les pronostics des joueurs deviennent visibles à tous.</span>
-              <span>Les bonus sont bloqués dès le début du premier match.</span>
-              <span>Le mode test est volontairement différent, parce qu'il sert à vérifier le fonctionnement.</span>
-              <span>En mode test, les pronostics peuvent être visibles plus facilement. Pour la vraie saison, la règle ci-dessus s'applique.</span>
-            </div>
           </aside>
         </section>
 
@@ -194,6 +163,70 @@
             <div class="bonus-grid" id="seasonBonusList"></div>
           </div>
         </section>
+
+        <section class="rules-section" data-mobile-panel="rules">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Règlement / installation</h3>
+            </div>
+            <div class="rules rules-page">
+              <strong>Barème des matchs</strong>
+              <span>1 pt par score d'équipe trouvé</span>
+              <span>+2 pts bon écart de buts</span>
+              <span>+2 pts bon résultat</span>
+              <span>+2 pts score exact</span>
+              <span>+3 pts vainqueur de journée</span>
+              <span>1 oubli de pronostic : carton jaune</span>
+              <span>2 oublis au total : carton rouge et -2 pts</span>
+              <span>Les oublis se cumulent même sur plusieurs journées</span>
+              <span>Maximum 1 carton rouge par journée</span>
+
+              <strong>Bonus saison</strong>
+              <span>10 pts champion</span>
+              <span>5 pts meilleure attaque</span>
+              <span>5 pts meilleure défense</span>
+              <span>3 pts meilleur buteur</span>
+              <span>3 pts meilleur passeur</span>
+              <span>3 pts meilleur gardien</span>
+              <span>3 pts meilleur joueur</span>
+              <span>Les bonus sont mis à jour manuellement par l'admin après chaque journée, selon les listes officielles Premier League.</span>
+              <span>Le bonus meilleur joueur est mis à jour à la fin du championnat.</span>
+
+              <strong>Prize money</strong>
+              <span>1er : 40 francs x nombre de participants</span>
+              <span>2eme : repas et boisson offerte, maximum 50 francs, payé par tous les participants présents ou non au repas</span>
+              <span>3eme : boisson offerte, maximum 20 francs, payé par tous les participants présents ou non au repas</span>
+
+              <strong>Règlement pronostics</strong>
+              <span>Avant le début du match : personne ne voit les pronostics des autres joueurs.</span>
+              <span>Même l'admin Norbert ne les voit pas avant le début.</span>
+              <span>Dès que l'heure du match est passée : le pronostic est bloqué.</span>
+              <span>Après le début du match : les pronostics des joueurs deviennent visibles à tous.</span>
+              <span>Les bonus sont bloqués dès le début du premier match de championnat.</span>
+              <span>Le mode test est volontairement différent, car il sert uniquement à vérifier le fonctionnement.</span>
+              <span>En mode test, les pronostics peuvent être visibles plus facilement. Pour la vraie saison, la règle ci-dessus s'applique.</span>
+
+              <strong>Vainqueur de journée</strong>
+              <span>Le vainqueur de journée peut changer la photo du groupe.</span>
+              <span>En cas d'égalité entre deux ou plusieurs joueurs, le départage se fait dans cet ordre : scores exacts, bons résultats, bons écarts de buts.</span>
+              <span>Si aucun départage n'est possible, les 3 points de vainqueur de journée ne sont pas distribués.</span>
+
+              <strong>Départage fin de championnat</strong>
+              <span>En cas d'égalité au classement final, le départage se fait dans cet ordre : nombre de scores exacts, nombre de bons résultats, nombre de vainqueurs de journée.</span>
+
+              <strong>Installation sur Android</strong>
+              <span>Ouvrir le lien dans Chrome ou Google.</span>
+              <span>Appuyer sur les trois points.</span>
+              <span>Choisir Ajouter à l'écran d'accueil ou Installer l'application.</span>
+
+              <strong>Installation sur iPhone</strong>
+              <span>Ouvrir le lien dans Safari.</span>
+              <span>Appuyer sur le bouton partager.</span>
+              <span>Choisir Sur l'écran d'accueil.</span>
+              <span>Valider Ajouter.</span>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -214,6 +247,6 @@
       </article>
     </template>
 
-    <script src="client.js?v=20260719-1900"></script>
+    <script src="client.js?v=20260719-1930"></script>
   </body>
 </html>
