@@ -555,7 +555,23 @@ form button {
   font-weight: 850;
 }
 
-.leader-table td > span:not(.avatar):not(.rank-badge):not(.card-badges) {
+.leader-total strong {
+  display: block;
+  color: var(--amber);
+  font-size: 0.98rem;
+}
+
+.leader-breakdown {
+  display: block;
+  max-width: 170px;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.leader-table td > span:not(.avatar):not(.rank-badge):not(.card-badges):not(.leader-breakdown) {
   display: block;
   margin-top: 2px;
   color: var(--muted);
