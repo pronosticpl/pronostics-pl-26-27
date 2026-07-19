@@ -1983,29 +1983,32 @@ function startCountdown() {
 }
 
 function standings() {
-  const baseRows = state.users.map((user) => ({
-    ...user,
-    points: playerStatsFor(user.id).total,
-  }));
+  const baseRows = state.users.map((user) => {
+    const stats = playerStatsFor(user.id);
+    return {
+      ...user,
+      points: stats.total,
+      stats,
+    };
+  });
 
-  return baseRows.sort((a, b) => b.points - a.points || a.name.localeCompare(b.name));
+  return baseRows.sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.stats.exactScores - a.stats.exactScores ||
+      b.stats.goodResults - a.stats.goodResults ||
+      b.stats.dayWins - a.stats.dayWins ||
+      a.name.localeCompare(b.name),
+  );
 }
 
 function bonusByUser() {
   const bonus = new Map();
   const days = [...new Set(state.matches.map((match) => match.matchday).filter(Boolean))];
   days.forEach((day) => {
-    const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
-    if (matches.length === 0) return;
-    const scores = state.users.map((user) => ({
-      id: user.id,
-      points: matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0),
-    }));
-    const best = Math.max(...scores.map((row) => row.points));
-    if (best <= 0) return;
-    scores.filter((row) => row.points === best).forEach((row) => {
-      bonus.set(row.id, (bonus.get(row.id) ?? 0) + 3);
-    });
+    const winner = matchdayWinnerFor(day);
+    if (!winner) return;
+    bonus.set(winner.id, (bonus.get(winner.id) ?? 0) + 3);
   });
   return bonus;
 }
@@ -2021,11 +2024,10 @@ function isMatchdayVisible(match) {
 }
 
 function matchdayDetailFor(userId, day) {
-  const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
-  const points = matches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
-  const allScores = state.users.map((user) => matches.reduce((sum, match) => sum + pointsFor(match, user.id), 0));
-  const best = allScores.length ? Math.max(...allScores) : 0;
-  const winner = best > 0 && points === best;
+  const score = matchdayScoreFor(userId, day);
+  const points = score.points;
+  const dayWinner = matchdayWinnerFor(day);
+  const winner = dayWinner?.id === userId;
   const winnerBonus = winner ? 3 : 0;
   const cards = matchdayCardDetailFor(userId, day);
   const total = points + winnerBonus - cards.penaltyPoints;
@@ -2044,6 +2046,49 @@ function matchdayDetailFor(userId, day) {
 
 function matchdayDetailsFor(userId) {
   return leaderboardDays().map((day) => matchdayDetailFor(userId, day)).filter((detail) => detail.points > 0 || detail.winner);
+}
+
+function matchdayScoreFor(userId, day) {
+  const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
+  return matches.reduce(
+    (score, match) => {
+      const prediction = match.predictions[userId];
+      if (!hasScore(prediction)) return score;
+
+      const resultA = Number(match.result.a);
+      const resultB = Number(match.result.b);
+      const predA = Number(prediction.a);
+      const predB = Number(prediction.b);
+      const exactScore = resultA === predA && resultB === predB;
+      const goodResult = outcome(resultA, resultB) === outcome(predA, predB);
+      const goodDiff = resultA - resultB === predA - predB;
+
+      score.points += pointsFor(match, userId);
+      if (exactScore) score.exactScores += 1;
+      if (goodResult) score.goodResults += 1;
+      if (goodDiff) score.goodDiffs += 1;
+      return score;
+    },
+    { points: 0, exactScores: 0, goodResults: 0, goodDiffs: 0 },
+  );
+}
+
+function matchdayWinnerFor(day) {
+  const rows = state.users.map((user) => ({
+    user,
+    ...matchdayScoreFor(user.id, day),
+  }));
+  const bestPoints = rows.length ? Math.max(...rows.map((row) => row.points)) : 0;
+  if (bestPoints <= 0) return null;
+
+  let leaders = rows.filter((row) => row.points === bestPoints);
+  for (const key of ["exactScores", "goodResults", "goodDiffs"]) {
+    const bestValue = Math.max(...leaders.map((row) => row[key]));
+    leaders = leaders.filter((row) => row[key] === bestValue);
+    if (leaders.length === 1) return leaders[0].user;
+  }
+
+  return null;
 }
 
 function seasonBonusDetailsFor(userId) {
