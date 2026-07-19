@@ -518,7 +518,7 @@ function renderSeasonBonus() {
 }
 
 function bonusControlsHtml(category, role) {
-  if (role === "official") {
+  if (role === "official" && !individualBonusIds.has(category.id)) {
     return `<input data-role="${role}" data-bonus-id="${category.id}" type="text" autocomplete="off" placeholder="${individualBonusIds.has(category.id) ? "Equipe - joueur" : "Réponse officielle"}" />`;
   }
 
@@ -531,8 +531,9 @@ function bonusControlsHtml(category, role) {
 
   return `
     <span class="bonus-choice">
-      <input data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team" type="text" autocomplete="off" list="${bonusTeamListId(role, category.id)}" placeholder="Equipe" />
-      <datalist id="${bonusTeamListId(role, category.id)}">${teamOptionsHtml()}</datalist>
+      <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="team">
+        ${teamSelectOptionsHtml("")}
+      </select>
       <select data-role="${role}" data-bonus-id="${category.id}" data-bonus-part="player">
         ${playerSelectOptionsHtml("", "")}
       </select>
@@ -550,6 +551,14 @@ function teamOptionsHtml() {
   const options = ['<option value="">Choisir équipe</option>'];
   teams.forEach((team) => {
     options.push(`<option value="${escapeHtml(team)}"></option>`);
+  });
+  return options.join("");
+}
+
+function teamSelectOptionsHtml(selected = "") {
+  const options = ['<option value="">Choisir équipe</option>'];
+  bonusTeamChoices().forEach((team) => {
+    options.push(`<option value="${escapeHtml(team)}"${same(team, selected) ? " selected" : ""}>${escapeHtml(team)}</option>`);
   });
   return options.join("");
 }
@@ -582,6 +591,10 @@ function playerSelectOptionsHtml(team, selected = "") {
 }
 
 function playersForTeam(team) {
+  if (!team) {
+    return [...new Set(Object.values(state.playersByTeam || {}).flat())]
+      .sort((a, b) => a.localeCompare(b, "fr"));
+  }
   const keys = teamLookupKeys(team);
   const players = keys.flatMap((key) => state.playersByTeam?.[key] || []);
   return [...new Set(players)].sort((a, b) => a.localeCompare(b, "fr"));
@@ -646,9 +659,12 @@ function setBonusControlsValue(row, category, role, value) {
   const playerCustom = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="playerCustom"]`);
   const replacementSelect = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="replacement"]`);
   const replacementCustom = row.querySelector(`[data-role="${role}"][data-bonus-id="${category.id}"][data-bonus-part="replacementCustom"]`);
-  teamInput.value = team;
+  teamInput.innerHTML = teamSelectOptionsHtml(team);
+  setSelectValue(teamInput, team);
   playerSelect.innerHTML = playerSelectOptionsHtml(team, player);
   replacementSelect.innerHTML = playerSelectOptionsHtml(team, replacement);
+  setSelectValue(playerSelect, player);
+  setSelectValue(replacementSelect, replacement);
   playerCustom.value = playerSelect.value === "__custom__" ? player : "";
   replacementCustom.value = replacementSelect.value === "__custom__" ? replacement : "";
 }
@@ -673,6 +689,9 @@ function splitBonusIndividualValue(value = "") {
   const parts = mainValue.split(" - ");
   const replacement = clean(replacementValue);
   if (parts.length >= 2) return { team: clean(parts.shift()), player: clean(parts.join(" - ")), replacement };
+  if (bonusTeamChoices().some((team) => same(team, clean(mainValue)))) {
+    return { team: clean(mainValue), player: "", replacement };
+  }
   return { team: "", player: clean(mainValue), replacement };
 }
 
@@ -692,7 +711,13 @@ function bonusPlayerChoice(row, role, bonusId, part) {
   const selectValue = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="${part}"]`)?.value ?? "");
   const customValue = clean(row.querySelector(`[data-role="${role}"][data-bonus-id="${bonusId}"][data-bonus-part="${part}Custom"]`)?.value ?? "");
   if (selectValue === "__custom__") return customValue;
-  return customValue || selectValue;
+  return selectValue || customValue;
+}
+
+function setSelectValue(select, value) {
+  if (!select || !value) return;
+  const option = [...select.options].find((item) => same(item.value, value));
+  select.value = option ? option.value : "__custom__";
 }
 
 function renderAdminControls() {
