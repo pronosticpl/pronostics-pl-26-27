@@ -772,6 +772,17 @@ form button {
   text-align: right;
 }
 
+.public-prediction-result {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.prediction-card-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .public-predictions small {
   color: var(--gold);
   font-size: 0.86rem;

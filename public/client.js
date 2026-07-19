@@ -625,10 +625,24 @@ function renderPublicMatchPredictions(match) {
     const identity = document.createElement("span");
     const score = hasScore(prediction) ? `${prediction.a} - ${prediction.b}` : "Aucun prono";
     const points = pointsFor(match, user.id);
+    const cards = matchdayCardDetailFor(user.id, match.matchday);
+    const result = document.createElement("b");
     identity.className = "user-identity";
     identity.append(avatarNode(user), document.createTextNode(user.name));
     item.append(identity);
-    item.insertAdjacentHTML("beforeend", `<b><span>${score}</span><small>${points} pts</small></b>`);
+    result.className = "public-prediction-result";
+    result.insertAdjacentHTML("beforeend", `<span>${score}</span><small>${points} pts</small>`);
+    if (cards.missedPredictions > 0) {
+      const penalties = document.createElement("span");
+      penalties.className = "prediction-card-detail";
+      if (cards.yellowCards) penalties.append(cardBadge("yellow", cards.yellowCards));
+      if (cards.redCards) {
+        penalties.append(cardBadge("red", cards.redCards));
+        penalties.insertAdjacentHTML("beforeend", `<small>-${cards.penaltyPoints} pts</small>`);
+      }
+      result.append(penalties);
+    }
+    item.append(result);
     box.append(item);
   });
 
