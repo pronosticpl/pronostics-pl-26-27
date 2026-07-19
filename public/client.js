@@ -1812,26 +1812,26 @@ function renderLeaderboard() {
     return;
   }
 
-  const days = leaderboardDays();
   const table = document.createElement("table");
-  table.className = "leader-table";
-  const header = document.createElement("thead");
-  header.innerHTML = `
-    <tr>
-      <th>Joueur</th>
-      <th>Total</th>
-      <th>Bonus</th>
-    </tr>
+  table.className = "leader-table standings-table";
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th>Joueur</th>
+        <th>Total</th>
+        <th>Score équipe</th>
+        <th>Bon écart</th>
+        <th>Bon résultat</th>
+        <th>Score exact</th>
+        <th>VJ</th>
+        <th>Carton rouge</th>
+      </tr>
+    </thead>
   `;
-  const headerRow = header.querySelector("tr");
-  days.forEach((day) => {
-    const th = document.createElement("th");
-    th.textContent = `J${day}`;
-    headerRow.append(th);
-  });
 
   const body = document.createElement("tbody");
   rows.forEach((user, index) => {
+    const stats = user.stats;
     const row = document.createElement("tr");
     const nameCell = document.createElement("td");
     nameCell.className = "leader-player";
@@ -1842,24 +1842,25 @@ function renderLeaderboard() {
 
     const totalCell = document.createElement("td");
     totalCell.className = "leader-total";
-    totalCell.innerHTML = `<strong>${user.stats.total} pts</strong>`;
+    totalCell.innerHTML = `<strong>${stats.total} pts</strong>`;
 
-    const bonus = seasonBonusDetailsFor(user.id);
-    const bonusCell = document.createElement("td");
-    bonusCell.innerHTML = bonus.available ? `<strong>${bonus.points} pts</strong>` : "-";
-
-    row.append(nameCell, totalCell, bonusCell);
-    days.forEach((day) => {
-      const detail = matchdayDetailFor(user.id, day);
+    row.append(nameCell, totalCell);
+    [
+      stats.teamScores,
+      stats.goodDiffs,
+      stats.goodResults,
+      stats.exactScores,
+      stats.dayWins,
+      stats.redCards,
+    ].forEach((value) => {
       const cell = document.createElement("td");
-      cell.innerHTML = detail.html;
-      if (detail.winner) cell.className = "day-winner";
+      cell.textContent = value;
       row.append(cell);
     });
     body.append(row);
   });
 
-  table.append(header, body);
+  table.append(body);
   els.leaderboard.append(table);
 }
 
@@ -1869,38 +1870,44 @@ function renderPointsDetail() {
 
   if (rows.length === 0) return;
 
+  const days = leaderboardDays();
   const table = document.createElement("table");
   table.className = "leader-table points-detail-table";
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Joueur</th>
-        <th>Matchs</th>
-        <th>VJ</th>
-        <th>Bonus</th>
-        <th>Pén.</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-  `;
+  const header = document.createElement("thead");
+  header.innerHTML = "<tr><th>Joueur</th></tr>";
+  const headerRow = header.querySelector("tr");
+  days.forEach((day) => {
+    const th = document.createElement("th");
+    th.textContent = `J${day}`;
+    headerRow.append(th);
+  });
+  const totalHeader = document.createElement("th");
+  totalHeader.textContent = "Total";
+  headerRow.append(totalHeader);
 
   const body = document.createElement("tbody");
   rows.forEach((user) => {
-    const stats = user.stats;
     const row = document.createElement("tr");
-    row.innerHTML = `
-      <td class="leader-player"><strong></strong></td>
-      <td>${stats.matchPoints}</td>
-      <td>${stats.dayWins * 3}</td>
-      <td>${stats.seasonBonus}</td>
-      <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td>
-      <td class="leader-total"><strong>${stats.total}</strong></td>
-    `;
-    row.querySelector("strong").textContent = user.name;
+    const nameCell = document.createElement("td");
+    nameCell.className = "leader-player";
+    nameCell.innerHTML = "<strong></strong>";
+    nameCell.querySelector("strong").textContent = user.name;
+    row.append(nameCell);
+    days.forEach((day) => {
+      const detail = matchdayDetailFor(user.id, day);
+      const cell = document.createElement("td");
+      cell.innerHTML = detail.html;
+      if (detail.winner) cell.className = "day-winner";
+      row.append(cell);
+    });
+    const totalCell = document.createElement("td");
+    totalCell.className = "leader-total";
+    totalCell.innerHTML = `<strong>${user.stats.total}</strong>`;
+    row.append(totalCell);
     body.append(row);
   });
 
-  table.append(body);
+  table.append(header, body);
   els.pointsDetail.innerHTML = "<h4>Résultat détaillé</h4>";
   els.pointsDetail.append(table);
 }
@@ -2161,6 +2168,13 @@ function playerStatsFor(userId) {
     const prediction = match.predictions[userId];
     return Number(match.result.a) === Number(prediction.a) && Number(match.result.b) === Number(prediction.b);
   }).length;
+  const teamScores = predictedMatches.reduce((sum, match) => {
+    const prediction = match.predictions[userId];
+    let count = 0;
+    if (Number(match.result.a) === Number(prediction.a)) count += 1;
+    if (Number(match.result.b) === Number(prediction.b)) count += 1;
+    return sum + count;
+  }, 0);
   const goodResults = predictedMatches.filter((match) => {
     const prediction = match.predictions[userId];
     return outcome(Number(match.result.a), Number(match.result.b)) === outcome(Number(prediction.a), Number(prediction.b));
@@ -2172,6 +2186,7 @@ function playerStatsFor(userId) {
 
   return {
     predictions: predictedMatches.length,
+    teamScores,
     exactScores,
     goodResults,
     goodDiffs,

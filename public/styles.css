@@ -510,7 +510,16 @@ form button {
 
 .leader-table th:first-child,
 .leader-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
   text-align: left;
+  box-shadow: 10px 0 14px -14px rgba(22, 27, 24, 0.55);
+}
+
+.leader-table th:first-child {
+  background: #fffdf8;
+  z-index: 3;
 }
 
 .leader-table td {
@@ -573,6 +582,7 @@ form button {
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid var(--line);
+  overflow-x: auto;
 }
 
 .points-detail h4 {
@@ -587,6 +597,10 @@ form button {
 
 .points-detail-table .leader-player {
   min-width: 96px;
+}
+
+.standings-table {
+  min-width: 760px;
 }
 
 .rules {
