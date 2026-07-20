@@ -937,6 +937,7 @@ const els = {
   loginUser: document.querySelector("#loginUser"),
   loginPin: document.querySelector("#loginPin"),
   forgotPinBtn: document.querySelector("#forgotPinBtn"),
+  changePinBtn: document.querySelector("#changePinBtn"),
   logoutBtn: document.querySelector("#logoutBtn"),
   avatarPanel: document.querySelector("#avatarPanel"),
   avatarPreview: document.querySelector("#avatarPreview"),
@@ -1082,7 +1083,26 @@ els.forgotPinBtn.addEventListener("click", () => {
     resetUserPin(user.id);
     return;
   }
-  alert(`Demande à Norbert de réinitialiser le PIN de ${user.name}.`);
+  alert(`Demande à Norbert de créer un PIN temporaire pour ${user.name}. Ensuite connecte-toi et clique sur "Changer mon PIN".`);
+});
+
+els.changePinBtn.addEventListener("click", () => {
+  const user = currentUser();
+  if (!user) {
+    alert("Connecte-toi d'abord pour changer ton PIN.");
+    return;
+  }
+  const currentPin = prompt("PIN actuel");
+  if (currentPin === null) return;
+  if (currentPin.trim() !== user.pin) {
+    alert("PIN actuel incorrect.");
+    return;
+  }
+  const newPin = prompt("Nouveau PIN");
+  if (!newPin?.trim()) return;
+  user.pin = newPin.trim();
+  persist();
+  alert("Ton PIN a été changé.");
 });
 
 els.logoutBtn.addEventListener("click", () => {
@@ -1949,53 +1969,36 @@ function renderPlayerStats() {
     return;
   }
 
-  const table = document.createElement("table");
-  table.className = "leader-table stats-table";
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Joueur</th>
-        <th>Score exact</th>
-        <th>Bon résultat</th>
-        <th>Bon écart</th>
-        <th>Pronos</th>
-        <th>Journées</th>
-        <th>Pts matchs</th>
-        <th>Bonus</th>
-        <th>Oublis</th>
-        <th>Pén.</th>
-        <th>Moy.</th>
-        <th>Total</th>
-      </tr>
-    </thead>
-  `;
-
-  const body = document.createElement("tbody");
   standings().forEach((user) => {
     const stats = user.stats;
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td class="leader-player"><span class="user-identity"><strong></strong></span></td>
-      <td>${stats.exactScores}</td>
-      <td>${stats.goodResults}</td>
-      <td>${stats.goodDiffs}</td>
-      <td>${stats.predictions}</td>
-      <td>${stats.dayWins}</td>
-      <td>${stats.matchPoints}</td>
-      <td>${stats.seasonBonus}</td>
-      <td>${stats.missedPredictions}</td>
-      <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td>
-      <td>${stats.average}</td>
-      <td class="leader-total"><strong>${stats.total} pts</strong></td>
+    const card = document.createElement("article");
+    card.className = "individual-stat";
+    card.innerHTML = `
+      <div class="individual-stat-head">
+        <span class="user-identity"><strong></strong></span>
+        <b>${stats.total} pts</b>
+      </div>
+      <table>
+        <tbody>
+          <tr><th>Pronos joués</th><td>${stats.predictions}</td></tr>
+          <tr><th>Scores exacts</th><td>${stats.exactScores}</td></tr>
+          <tr><th>Bons résultats</th><td>${stats.goodResults}</td></tr>
+          <tr><th>Bons écarts</th><td>${stats.goodDiffs}</td></tr>
+          <tr><th>Journées gagnées</th><td>${stats.dayWins}</td></tr>
+          <tr><th>Points matchs</th><td>${stats.matchPoints}</td></tr>
+          <tr><th>Bonus saison</th><td>${stats.seasonBonus}</td></tr>
+          <tr><th>Oublis</th><td>${stats.missedPredictions}</td></tr>
+          <tr><th>Pénalité</th><td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td></tr>
+          <tr><th>Moyenne</th><td>${stats.average} pts/prono</td></tr>
+        </tbody>
+      </table>
     `;
-    const identity = row.querySelector(".user-identity");
+    const identity = card.querySelector(".user-identity");
     identity.prepend(avatarNode(user));
     identity.querySelector("strong").textContent = user.name;
     identity.append(cardBadgesFor(user.id));
-    body.append(row);
+    els.playerStats.append(card);
   });
-  table.append(body);
-  els.playerStats.append(table);
 }
 
 function renderOverallStats() {
@@ -2374,11 +2377,11 @@ function resetUserPin(userId) {
   if (!requireAdmin()) return;
   const user = state.users.find((item) => item.id === userId);
   if (!user) return;
-  const pin = prompt(`Nouveau PIN pour ${user.name}`);
+  const pin = prompt(`PIN temporaire pour ${user.name}`);
   if (!pin) return;
   user.pin = pin.trim();
   persist();
-  alert(`PIN de ${user.name} mis à jour.`);
+  alert(`PIN temporaire de ${user.name} mis à jour. Le joueur doit ensuite choisir son propre PIN avec "Changer mon PIN".`);
 }
 
 function removeMatch(matchId) {

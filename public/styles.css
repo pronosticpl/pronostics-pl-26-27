@@ -786,7 +786,9 @@ form button {
 }
 
 .player-stats {
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
 }
 
 .overall-stats {
@@ -832,8 +834,49 @@ form button {
   overflow-wrap: anywhere;
 }
 
-.stats-table {
-  min-width: 760px;
+.individual-stat {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fffdf8;
+  border: 1px solid rgba(222, 215, 200, 0.86);
+}
+
+.individual-stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.individual-stat-head b {
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.individual-stat table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.individual-stat th,
+.individual-stat td {
+  padding: 7px 0;
+  border-top: 1px solid rgba(222, 215, 200, 0.75);
+}
+
+.individual-stat th {
+  color: var(--muted);
+  text-align: left;
+  font-weight: 760;
+}
+
+.individual-stat td {
+  color: var(--green);
+  text-align: right;
+  font-weight: 850;
 }
 
 .public-bonus {
