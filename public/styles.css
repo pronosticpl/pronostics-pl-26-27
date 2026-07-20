@@ -550,9 +550,9 @@ form button {
 }
 
 .leader-player {
-  width: 96px;
-  min-width: 96px;
-  max-width: 96px;
+  width: clamp(104px, 16vw, 150px);
+  min-width: clamp(104px, 16vw, 150px);
+  max-width: clamp(104px, 16vw, 150px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1208,9 +1208,9 @@ form button {
   }
 
   .leader-player {
-    width: 76px;
-    min-width: 76px;
-    max-width: 76px;
+    width: clamp(92px, 28vw, 128px);
+    min-width: clamp(92px, 28vw, 128px);
+    max-width: clamp(92px, 28vw, 128px);
     font-size: 0.72rem;
   }
 
