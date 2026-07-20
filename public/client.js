@@ -1824,6 +1824,7 @@ function renderLeaderboard() {
         <th title="Bon résultat" aria-label="Bon résultat"><span class="table-icon">✓</span></th>
         <th title="Score exact" aria-label="Score exact"><span class="table-icon">◎</span></th>
         <th title="Vainqueur de journée" aria-label="Vainqueur de journée"><span class="table-icon">★</span></th>
+        <th title="Points bonus saison" aria-label="Points bonus saison"><span class="table-icon">+</span></th>
         <th title="Carton rouge" aria-label="Carton rouge"><span class="table-icon red-icon">■</span></th>
       </tr>
     </thead>
@@ -1851,6 +1852,7 @@ function renderLeaderboard() {
       stats.goodResults,
       stats.exactScores,
       stats.dayWins,
+      stats.seasonBonus,
       stats.redCards,
     ].forEach((value) => {
       const cell = document.createElement("td");
@@ -1864,7 +1866,7 @@ function renderLeaderboard() {
   els.leaderboard.append(table);
   els.leaderboard.insertAdjacentHTML(
     "beforeend",
-    '<p class="table-legend"><span>∑ total</span><span>⚽ score équipe</span><span>± écart</span><span>✓ résultat</span><span>◎ score exact</span><span>★ VJ</span><span><b class="red-icon">■</b> rouge</span></p>',
+    '<p class="table-legend"><span>∑ total</span><span>⚽ score équipe</span><span>± écart</span><span>✓ résultat</span><span>◎ score exact</span><span>★ VJ</span><span>+ bonus</span><span><b class="red-icon">■</b> rouge</span></p>',
   );
 }
 
@@ -1895,6 +1897,7 @@ function renderPointsDetail() {
     const nameCell = document.createElement("td");
     nameCell.className = "leader-player";
     nameCell.innerHTML = "<strong></strong>";
+    nameCell.prepend(avatarNode(user));
     nameCell.querySelector("strong").textContent = user.name;
     row.append(nameCell);
     days.forEach((day) => {

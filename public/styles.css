@@ -615,8 +615,19 @@ form button {
 }
 
 .points-detail h4 {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
   margin: 0 0 10px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #fffdf8;
+  background: var(--green);
   font-size: 0.96rem;
+  font-weight: 850;
 }
 
 .points-detail-table {
@@ -629,7 +640,7 @@ form button {
 }
 
 .standings-table {
-  min-width: 650px;
+  min-width: 680px;
 }
 
 .rules {
@@ -1193,9 +1204,9 @@ form button {
   }
 
   .table-icon {
-    min-width: 14px;
-    min-height: 14px;
-    font-size: 0.72rem;
+    min-width: 13px;
+    min-height: 13px;
+    font-size: 0.68rem;
   }
 
   .table-legend {
