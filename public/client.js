@@ -1818,13 +1818,13 @@ function renderLeaderboard() {
     <thead>
       <tr>
         <th>Joueur</th>
-        <th>Total</th>
-        <th>Score équipe</th>
-        <th>Bon écart</th>
-        <th>Bon résultat</th>
-        <th>Score exact</th>
-        <th>VJ</th>
-        <th>Carton rouge</th>
+        <th title="Total" aria-label="Total"><span class="table-icon">∑</span></th>
+        <th title="Score d'équipe trouvé" aria-label="Score d'équipe trouvé"><span class="table-icon">⚽</span></th>
+        <th title="Bon écart de buts" aria-label="Bon écart de buts"><span class="table-icon">±</span></th>
+        <th title="Bon résultat" aria-label="Bon résultat"><span class="table-icon">✓</span></th>
+        <th title="Score exact" aria-label="Score exact"><span class="table-icon">◎</span></th>
+        <th title="Vainqueur de journée" aria-label="Vainqueur de journée"><span class="table-icon">★</span></th>
+        <th title="Carton rouge" aria-label="Carton rouge"><span class="table-icon red-icon">■</span></th>
       </tr>
     </thead>
   `;
@@ -1862,6 +1862,10 @@ function renderLeaderboard() {
 
   table.append(body);
   els.leaderboard.append(table);
+  els.leaderboard.insertAdjacentHTML(
+    "beforeend",
+    '<p class="table-legend"><span>∑ total</span><span>⚽ score équipe</span><span>± écart</span><span>✓ résultat</span><span>◎ score exact</span><span>★ VJ</span><span><b class="red-icon">■</b> rouge</span></p>',
+  );
 }
 
 function renderPointsDetail() {

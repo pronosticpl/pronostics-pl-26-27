@@ -508,6 +508,19 @@ form button {
   text-align: right;
 }
 
+.table-icon {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  min-height: 18px;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.red-icon {
+  color: var(--red);
+}
+
 .leader-table th:first-child,
 .leader-table td:first-child {
   position: sticky;
@@ -582,6 +595,16 @@ form button {
   color: var(--muted);
   font-size: 0.7rem;
   font-weight: 700;
+}
+
+.table-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 9px;
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 760;
 }
 
 .points-detail {
@@ -1164,9 +1187,20 @@ form button {
   }
 
   .leader-table th {
-    padding: 0 5px 3px;
+    padding: 0 4px 3px;
     font-size: 0.58rem;
     line-height: 1.05;
+  }
+
+  .table-icon {
+    min-width: 14px;
+    min-height: 14px;
+    font-size: 0.72rem;
+  }
+
+  .table-legend {
+    font-size: 0.6rem;
+    gap: 4px 7px;
   }
 
   .leader-table td {
