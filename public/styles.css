@@ -550,8 +550,8 @@ form button {
 }
 
 .leader-player {
-  width: max-content;
-  min-width: max-content;
+  width: 1%;
+  min-width: 0;
   max-width: none;
   overflow: visible;
   text-overflow: clip;
@@ -833,7 +833,7 @@ form button {
 }
 
 .stats-table {
-  min-width: 560px;
+  min-width: 760px;
 }
 
 .public-bonus {
@@ -1223,8 +1223,8 @@ form button {
   }
 
   .leader-player {
-    width: max-content;
-    min-width: max-content;
+    width: 1%;
+    min-width: 0;
     max-width: none;
     font-size: 0.72rem;
   }

@@ -936,6 +936,7 @@ const els = {
   loginForm: document.querySelector("#loginForm"),
   loginUser: document.querySelector("#loginUser"),
   loginPin: document.querySelector("#loginPin"),
+  forgotPinBtn: document.querySelector("#forgotPinBtn"),
   logoutBtn: document.querySelector("#logoutBtn"),
   avatarPanel: document.querySelector("#avatarPanel"),
   avatarPreview: document.querySelector("#avatarPreview"),
@@ -1069,6 +1070,19 @@ els.loginForm.addEventListener("submit", (event) => {
   setCurrentUser(user.id);
   els.loginPin.value = "";
   persist();
+});
+
+els.forgotPinBtn.addEventListener("click", () => {
+  const user = state.users.find((item) => item.id === els.loginUser.value);
+  if (!user) {
+    alert("Choisis d'abord ton pseudo dans la liste.");
+    return;
+  }
+  if (isAdmin()) {
+    resetUserPin(user.id);
+    return;
+  }
+  alert(`Demande à Norbert de réinitialiser le PIN de ${user.name}.`);
 });
 
 els.logoutBtn.addEventListener("click", () => {
@@ -1348,14 +1362,20 @@ function renderUsers() {
     const identity = document.createElement("span");
     const name = document.createElement("span");
     const button = document.createElement("button");
+    const resetPinButton = document.createElement("button");
     identity.className = "user-identity";
     name.textContent = user.name;
     button.type = "button";
     button.textContent = "×";
     button.title = `Retirer ${user.name}`;
     button.addEventListener("click", () => removeUser(user.id));
+    resetPinButton.type = "button";
+    resetPinButton.textContent = "PIN";
+    resetPinButton.title = `Réinitialiser le PIN de ${user.name}`;
+    resetPinButton.hidden = !isAdmin();
+    resetPinButton.addEventListener("click", () => resetUserPin(user.id));
     identity.append(avatarNode(user), name);
-    item.append(identity, button);
+    item.append(identity, resetPinButton, button);
     els.friendList.append(item);
   });
 }
@@ -1938,9 +1958,13 @@ function renderPlayerStats() {
         <th>Score exact</th>
         <th>Bon résultat</th>
         <th>Bon écart</th>
+        <th>Pronos</th>
         <th>Journées</th>
+        <th>Pts matchs</th>
+        <th>Bonus</th>
         <th>Oublis</th>
         <th>Pén.</th>
+        <th>Moy.</th>
         <th>Total</th>
       </tr>
     </thead>
@@ -1955,9 +1979,13 @@ function renderPlayerStats() {
       <td>${stats.exactScores}</td>
       <td>${stats.goodResults}</td>
       <td>${stats.goodDiffs}</td>
+      <td>${stats.predictions}</td>
       <td>${stats.dayWins}</td>
+      <td>${stats.matchPoints}</td>
+      <td>${stats.seasonBonus}</td>
       <td>${stats.missedPredictions}</td>
       <td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td>
+      <td>${stats.average}</td>
       <td class="leader-total"><strong>${stats.total} pts</strong></td>
     `;
     const identity = row.querySelector(".user-identity");
@@ -2340,6 +2368,17 @@ function removeUser(userId) {
   delete state.seasonBonus.predictions[userId];
   if (currentUserId === userId) setCurrentUser(null);
   persist();
+}
+
+function resetUserPin(userId) {
+  if (!requireAdmin()) return;
+  const user = state.users.find((item) => item.id === userId);
+  if (!user) return;
+  const pin = prompt(`Nouveau PIN pour ${user.name}`);
+  if (!pin) return;
+  user.pin = pin.trim();
+  persist();
+  alert(`PIN de ${user.name} mis à jour.`);
 }
 
 function removeMatch(matchId) {
