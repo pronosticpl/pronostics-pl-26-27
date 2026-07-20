@@ -145,13 +145,27 @@ function mergeUsers(storedUsers = [], incomingUsers = [], deletedUsers = {}) {
     const canonicalId = nameKey ? idByName.get(nameKey) : null;
     if (canonicalId) {
       aliases[user.id] = canonicalId;
-      usersById.set(canonicalId, { ...(usersById.get(canonicalId) || {}), ...user, id: canonicalId });
+      usersById.set(canonicalId, mergeUser(usersById.get(canonicalId), { ...user, id: canonicalId }));
       return;
     }
     if (nameKey) idByName.set(nameKey, user.id);
-    usersById.set(user.id, { ...(usersById.get(user.id) || {}), ...user });
+    usersById.set(user.id, mergeUser(usersById.get(user.id), user));
   });
   return { users: [...usersById.values()], aliases };
+}
+
+function mergeUser(previous = {}, next = {}) {
+  const merged = { ...previous, ...next };
+  const previousPinAt = Number(previous.pinUpdatedAt || previous.createdAt) || 0;
+  const nextPinAt = Number(next.pinUpdatedAt || next.createdAt) || 0;
+  if (previous.pin && previousPinAt > nextPinAt) {
+    merged.pin = previous.pin;
+    merged.pinUpdatedAt = previous.pinUpdatedAt || previous.createdAt;
+  } else if (next.pin) {
+    merged.pin = next.pin;
+    merged.pinUpdatedAt = next.pinUpdatedAt || next.createdAt || Date.now();
+  }
+  return merged;
 }
 
 function mergeMatches(storedMatches = [], incomingMatches = [], aliases = {}, deletedUsers = {}) {
