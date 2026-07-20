@@ -550,11 +550,11 @@ form button {
 }
 
 .leader-player {
-  width: clamp(104px, 16vw, 150px);
-  min-width: clamp(104px, 16vw, 150px);
-  max-width: clamp(104px, 16vw, 150px);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
   white-space: nowrap;
 }
 
@@ -573,8 +573,8 @@ form button {
 
 .leader-player strong {
   color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .leader-total,
@@ -618,15 +618,19 @@ form button {
   position: sticky;
   left: 0;
   z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
+  display: block;
   margin: 0 0 10px;
-  padding: 0 10px;
-  border-radius: 8px;
-  color: #fffdf8;
-  background: var(--green);
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
   font-size: 0.96rem;
+  font-weight: 850;
+}
+
+.subsection-title {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 0.94rem;
   font-weight: 850;
 }
 
@@ -1219,9 +1223,9 @@ form button {
   }
 
   .leader-player {
-    width: clamp(92px, 28vw, 128px);
-    min-width: clamp(92px, 28vw, 128px);
-    max-width: clamp(92px, 28vw, 128px);
+    width: max-content;
+    min-width: max-content;
+    max-width: none;
     font-size: 0.72rem;
   }
 
