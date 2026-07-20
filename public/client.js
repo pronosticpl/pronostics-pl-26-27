@@ -1042,7 +1042,7 @@ els.signupForm.addEventListener("submit", async (event) => {
   } catch {
     alert("La photo n'a pas pu être ajoutée. Le joueur est inscrit sans avatar.");
   }
-  const user = { id: crypto.randomUUID(), name, pin, avatar, createdAt: Date.now() };
+  const user = { id: crypto.randomUUID(), name, pin, avatar, createdAt: Date.now(), pinUpdatedAt: Date.now() };
   state.users.push(user);
   setCurrentUser(user.id);
   els.signupForm.reset();
@@ -1101,6 +1101,7 @@ els.changePinBtn.addEventListener("click", () => {
   const newPin = prompt("Nouveau PIN");
   if (!newPin?.trim()) return;
   user.pin = newPin.trim();
+  user.pinUpdatedAt = Date.now();
   persist();
   alert("Ton PIN a été changé.");
 });
@@ -2380,6 +2381,7 @@ function resetUserPin(userId) {
   const pin = prompt(`PIN temporaire pour ${user.name}`);
   if (!pin) return;
   user.pin = pin.trim();
+  user.pinUpdatedAt = Date.now();
   persist();
   alert(`PIN temporaire de ${user.name} mis à jour. Le joueur doit ensuite choisir son propre PIN avec "Changer mon PIN".`);
 }
@@ -2816,13 +2818,27 @@ function mergeClientUsers(remoteUsers = [], localUsers = [], deletedUsers = {}) 
     const canonicalId = nameKey ? idByName.get(nameKey) : null;
     if (canonicalId) {
       aliases[user.id] = canonicalId;
-      usersById.set(canonicalId, { ...(usersById.get(canonicalId) || {}), ...user, id: canonicalId });
+      usersById.set(canonicalId, mergeClientUser(usersById.get(canonicalId), { ...user, id: canonicalId }));
       return;
     }
     if (nameKey) idByName.set(nameKey, user.id);
-    usersById.set(user.id, { ...(usersById.get(user.id) || {}), ...user });
+    usersById.set(user.id, mergeClientUser(usersById.get(user.id), user));
   });
   return { users: [...usersById.values()], aliases };
+}
+
+function mergeClientUser(previous = {}, next = {}) {
+  const merged = { ...previous, ...next };
+  const previousPinAt = Number(previous.pinUpdatedAt || previous.createdAt) || 0;
+  const nextPinAt = Number(next.pinUpdatedAt || next.createdAt) || 0;
+  if (previous.pin && previousPinAt > nextPinAt) {
+    merged.pin = previous.pin;
+    merged.pinUpdatedAt = previous.pinUpdatedAt || previous.createdAt;
+  } else if (next.pin) {
+    merged.pin = next.pin;
+    merged.pinUpdatedAt = next.pinUpdatedAt || next.createdAt || Date.now();
+  }
+  return merged;
 }
 
 function mergeClientMatches(remoteMatches = [], localMatches = [], aliases = {}, deletedUsers = {}) {
