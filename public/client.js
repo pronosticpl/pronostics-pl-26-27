@@ -2275,10 +2275,12 @@ function cardStateFor(userId) {
 
 function cardDays() {
   return [...new Set(state.matches.filter(isMatchdayVisible).map((match) => match.matchday).filter(Boolean))]
+    .filter(isMatchdayStartedOrCompleted)
     .sort((a, b) => a - b);
 }
 
 function isCardCountableMatch(match) {
+  if (!isMatchdayStartedOrCompleted(match.matchday)) return false;
   if (state.testMode && match.status === "TEST") return hasResult(match);
   return isMatchLocked(match);
 }
@@ -2584,6 +2586,10 @@ function isMatchLocked(match) {
   const kickoff = new Date(match.date);
   if (Number.isNaN(kickoff.getTime())) return false;
   return Date.now() >= kickoff.getTime();
+}
+
+function isMatchdayStartedOrCompleted(day) {
+  return state.matches.some((match) => match.matchday === day && (isMatchLocked(match) || hasResult(match)));
 }
 
 function isSeasonLocked() {
