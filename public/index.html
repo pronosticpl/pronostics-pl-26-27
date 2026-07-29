@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Pronostics PL" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260724-cards" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260724-cards" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260724-cards" />
-    <link rel="stylesheet" href="styles.css?v=20260724-cards" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260729-nocards" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260729-nocards" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260729-nocards" />
+    <link rel="stylesheet" href="styles.css?v=20260729-nocards" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
@@ -41,6 +41,7 @@
           <button class="ghost-button" id="refreshStateBtn" type="button">Synchroniser</button>
           <span class="sync-pill" id="remoteStatus">Synchro...</span>
           <button class="ghost-button admin-only" id="exportBtn" type="button">Exporter</button>
+          <button class="ghost-button admin-only" id="exportExcelBtn" type="button">Excel</button>
           <label class="import-button admin-only">
             Importer
             <input id="importInput" type="file" accept="application/json" />
@@ -174,12 +175,6 @@
               <span>+2 pts bon écart de buts</span>
               <span>+3 pts bon résultat</span>
               <span>+2 pts score exact</span>
-              <span>+3 pts vainqueur de journée</span>
-              <span>1 oubli de pronostic : carton jaune</span>
-              <span>2 oublis au total : carton rouge et -2 pts</span>
-              <span>Les oublis se cumulent même sur plusieurs journées</span>
-              <span>Cartons et pénalités visibles uniquement pour les journées en cours ou terminées</span>
-              <span>Maximum 1 carton rouge par journée</span>
 
               <strong>Bonus saison</strong>
               <span>10 pts champion</span>
@@ -210,7 +205,7 @@
               <strong>Vainqueur de journée</strong>
               <span>Le vainqueur de journée peut changer la photo du groupe.</span>
               <span>En cas d'égalité entre deux ou plusieurs joueurs, le départage se fait dans cet ordre : scores exacts, bons résultats, bons écarts de buts.</span>
-              <span>Si aucun départage n'est possible, les 3 points de vainqueur de journée ne sont pas distribués.</span>
+              <span>Si aucun départage n'est possible, aucun vainqueur de journée n'est désigné.</span>
 
               <strong>Départage fin de championnat</strong>
               <span>En cas d'égalité au classement final, le départage se fait dans cet ordre : nombre de scores exacts, nombre de bons résultats, nombre de vainqueurs de journée.</span>
@@ -248,6 +243,6 @@
       </article>
     </template>
 
-    <script src="client.js?v=20260724-cards"></script>
+    <script src="client.js?v=20260729-nocards"></script>
   </body>
 </html>

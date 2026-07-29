@@ -959,6 +959,7 @@ const els = {
   pointsDetail: document.querySelector("#pointsDetail"),
   resetBtn: document.querySelector("#resetBtn"),
   exportBtn: document.querySelector("#exportBtn"),
+  exportExcelBtn: document.querySelector("#exportExcelBtn"),
   importInput: document.querySelector("#importInput"),
   apiKey: document.querySelector("#apiKey"),
   saveKeyBtn: document.querySelector("#saveKeyBtn"),
@@ -1186,14 +1187,103 @@ els.resetBtn.addEventListener("click", () => {
 
 els.exportBtn.addEventListener("click", () => {
   if (!requireAdmin()) return;
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  downloadTextFile("novaprono.json", JSON.stringify(state, null, 2), "application/json");
+});
+
+els.exportExcelBtn.addEventListener("click", () => {
+  if (!requireAdmin()) return;
+  downloadTextFile("novaprono-excel.csv", excelBackupCsv(), "text/csv;charset=utf-8");
+});
+
+function downloadTextFile(filename, content, type) {
+  const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "novaprono.json";
+  link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
-});
+}
+
+function excelBackupCsv() {
+  const lines = [];
+  const addSection = (title) => {
+    if (lines.length) lines.push([]);
+    lines.push([title]);
+  };
+  const addRows = (rows) => rows.forEach((row) => lines.push(row));
+
+  addSection("Sauvegarde NovaProno");
+  lines.push(["Date export", new Date().toLocaleString("fr-CH")]);
+  lines.push(["Joueurs", state.users.length]);
+  lines.push(["Matchs", state.matches.length]);
+
+  addSection("Classement");
+  addRows([
+    ["Rang", "Joueur", "Total", "Points matchs", "Bonus saison", "Scores equipes", "Bons ecarts", "Bons resultats", "Scores exacts", "Victoires journee"],
+    ...standings().map((user, index) => {
+      const stats = user.stats;
+      return [
+        index + 1,
+        user.name,
+        stats.total,
+        stats.matchPoints,
+        stats.seasonBonus,
+        stats.teamScores,
+        stats.goodDiffs,
+        stats.goodResults,
+        stats.exactScores,
+        stats.dayWins,
+      ];
+    }),
+  ]);
+
+  addSection("Pronostics et resultats");
+  addRows([
+    ["Journee", "Date", "Match", "Statut", "Resultat officiel", "Joueur", "Pronostic", "Points prono"],
+    ...sortedMatches().flatMap((match) =>
+      state.users.map((user) => {
+        const prediction = match.predictions[user.id];
+        return [
+          match.matchday || "",
+          match.date ? new Date(match.date).toLocaleString("fr-CH") : "",
+          `${match.home} - ${match.away}`,
+          match.status || "",
+          officialScoreLabel(match),
+          user.name,
+          hasScore(prediction) ? `${prediction.a} - ${prediction.b}` : "",
+          pointsFor(match, user.id),
+        ];
+      }),
+    ),
+  ]);
+
+  addSection("Bonus saison");
+  addRows([
+    ["Categorie", "Points", "Joueur", "Choix", "Reponse officielle", "Points obtenus"],
+    ...seasonBonusCategories.flatMap((category) =>
+      state.users.map((user) => [
+        category.label,
+        category.points,
+        user.name,
+        state.seasonBonus.predictions[user.id]?.[category.id] || "",
+        state.seasonBonus.official[category.id] || "",
+        seasonBonusCategoryPoints(user.id, category),
+      ]),
+    ),
+  ]);
+
+  return `\uFEFF${lines.map(csvLine).join("\n")}`;
+}
+
+function csvLine(values) {
+  return values.map(csvValue).join(";");
+}
+
+function csvValue(value) {
+  const text = String(value ?? "");
+  return `"${text.replaceAll('"', '""')}"`;
+}
 
 els.importInput.addEventListener("change", async (event) => {
   if (!requireAdmin()) {
@@ -1787,23 +1877,12 @@ function renderPublicMatchPredictions(match) {
     const identity = document.createElement("span");
     const score = hasScore(prediction) ? `${prediction.a} - ${prediction.b}` : "Aucun prono";
     const points = pointsFor(match, user.id);
-    const cards = matchdayCardDetailFor(user.id, match.matchday);
     const result = document.createElement("b");
     identity.className = "user-identity";
     identity.append(avatarNode(user), document.createTextNode(user.name));
     item.append(identity);
     result.className = "public-prediction-result";
     result.insertAdjacentHTML("beforeend", `<span>${score}</span><small>${points} pts</small>`);
-    if (cards.missedPredictions > 0) {
-      const penalties = document.createElement("span");
-      penalties.className = "prediction-card-detail";
-      if (cards.yellowCards) penalties.append(cardBadge("yellow", cards.yellowCards));
-      if (cards.redCards) {
-        penalties.append(cardBadge("red", cards.redCards));
-        penalties.insertAdjacentHTML("beforeend", `<small>-${cards.penaltyPoints} pts</small>`);
-      }
-      result.append(penalties);
-    }
     item.append(result);
     box.append(item);
   });
@@ -1866,7 +1945,6 @@ function renderLeaderboard() {
         <th title="Score exact" aria-label="Score exact"><span class="table-icon">◎</span></th>
         <th title="Vainqueur de journée" aria-label="Vainqueur de journée"><span class="table-icon">★</span></th>
         <th title="Points bonus saison" aria-label="Points bonus saison"><span class="table-icon">+</span></th>
-        <th title="Carton rouge" aria-label="Carton rouge"><span class="table-icon red-icon">■</span></th>
       </tr>
     </thead>
   `;
@@ -1880,7 +1958,6 @@ function renderLeaderboard() {
     nameCell.innerHTML = `<span class="rank-badge">${index + 1}</span>`;
     nameCell.append(avatarNode(user), document.createElement("strong"));
     nameCell.querySelector("strong").textContent = user.name;
-    nameCell.append(cardBadgesFor(user.id));
 
     const totalCell = document.createElement("td");
     totalCell.className = "leader-total";
@@ -1894,7 +1971,6 @@ function renderLeaderboard() {
       stats.exactScores,
       stats.dayWins,
       stats.seasonBonus,
-      stats.redCards,
     ].forEach((value) => {
       const cell = document.createElement("td");
       cell.textContent = value;
@@ -1907,7 +1983,7 @@ function renderLeaderboard() {
   els.leaderboard.append(table);
   els.leaderboard.insertAdjacentHTML(
     "beforeend",
-    '<p class="table-legend"><span>∑ total</span><span>⚽ score équipe</span><span>± écart</span><span>✓ résultat</span><span>◎ score exact</span><span>★ VJ</span><span>+ bonus</span><span><b class="red-icon">■</b> rouge</span></p>',
+    '<p class="table-legend"><span>∑ total</span><span>⚽ score équipe</span><span>± écart</span><span>✓ résultat</span><span>◎ score exact</span><span>★ VJ</span><span>+ bonus</span></p>',
   );
 }
 
@@ -1988,8 +2064,6 @@ function renderPlayerStats() {
           <tr><th>Journées gagnées</th><td>${stats.dayWins}</td></tr>
           <tr><th>Points matchs</th><td>${stats.matchPoints}</td></tr>
           <tr><th>Bonus saison</th><td>${stats.seasonBonus}</td></tr>
-          <tr><th>Oublis</th><td>${stats.missedPredictions}</td></tr>
-          <tr><th>Pénalité</th><td>${stats.penaltyPoints ? `-${stats.penaltyPoints}` : "0"}</td></tr>
           <tr><th>Moyenne</th><td>${stats.average} pts/prono</td></tr>
         </tbody>
       </table>
@@ -1997,7 +2071,6 @@ function renderPlayerStats() {
     const identity = card.querySelector(".user-identity");
     identity.prepend(avatarNode(user));
     identity.querySelector("strong").textContent = user.name;
-    identity.append(cardBadgesFor(user.id));
     els.playerStats.append(card);
   });
 }
@@ -2010,8 +2083,6 @@ function renderOverallStats() {
     { label: "Bons résultats", value: (row) => row.stats.goodResults, suffix: "résultats" },
     { label: "Journées gagnées", value: (row) => row.stats.dayWins, suffix: "journées" },
     { label: "Meilleure moyenne", value: (row) => Number(row.stats.average), suffix: "pts/prono", decimals: 1 },
-    { label: "Moins d'oublis", value: (row) => row.stats.missedPredictions, suffix: "oublis", lowest: true },
-    { label: "Plus de pénalités", value: (row) => row.stats.penaltyPoints, suffix: "pts", penalty: true },
   ];
 
   const table = document.createElement("table");
@@ -2036,10 +2107,10 @@ function renderOverallStats() {
     row.innerHTML = `
       <td>${item.label}</td>
       <td><strong></strong></td>
-      <td class="${item.penalty && value ? "penalty-value" : "leader-total"}"></td>
+      <td class="leader-total"></td>
     `;
     row.querySelector("strong").textContent = leaders.map((leader) => leader.user.name).join(", ");
-    row.lastElementChild.textContent = `${item.penalty && value ? `-${value}` : formatStatValue(value, item.decimals)} ${item.suffix}`;
+    row.lastElementChild.textContent = `${formatStatValue(value, item.decimals)} ${item.suffix}`;
     body.append(row);
   });
 
@@ -2128,19 +2199,12 @@ function matchdayDetailFor(userId, day) {
   const points = score.points;
   const dayWinner = matchdayWinnerFor(day);
   const winner = dayWinner?.id === userId;
-  const winnerBonus = winner ? 3 : 0;
-  const cards = matchdayCardDetailFor(userId, day);
-  const total = points + winnerBonus - cards.penaltyPoints;
-  const detailParts = [`${points}+${winnerBonus}`];
-  if (cards.penaltyPoints) detailParts.push(`-${cards.penaltyPoints}`);
   return {
     day,
     points,
     winner,
-    winnerBonus,
-    ...cards,
-    total,
-    html: total !== 0 || cards.missedPredictions ? `<strong>${total} pts</strong><span>${detailParts.join("")}</span>` : "-",
+    total: points,
+    html: points !== 0 || winner ? `<strong>${points} pts</strong>${winner ? "<span>VJ</span>" : ""}` : "-",
   };
 }
 
@@ -2202,7 +2266,6 @@ function playerStatsFor(userId) {
   const matchPoints = resultMatches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
   const dayWins = matchdayDetailsFor(userId).filter((detail) => detail.winner).length;
   const seasonBonus = seasonBonusPointsFor(userId);
-  const cards = cardSummaryFor(userId);
   const exactScores = predictedMatches.filter((match) => {
     const prediction = match.predictions[userId];
     return Number(match.result.a) === Number(prediction.a) && Number(match.result.b) === Number(prediction.b);
@@ -2230,80 +2293,11 @@ function playerStatsFor(userId) {
     goodResults,
     goodDiffs,
     dayWins,
-    ...cards,
     matchPoints,
     seasonBonus,
-    total: matchPoints + seasonBonus + dayWins * 3 - cards.penaltyPoints,
+    total: matchPoints + seasonBonus,
     average: predictedMatches.length ? (matchPoints / predictedMatches.length).toFixed(1) : "0.0",
   };
-}
-
-function cardSummaryFor(userId) {
-  return cardStateFor(userId).summary;
-}
-
-function matchdayCardDetailFor(userId, day) {
-  return cardStateFor(userId).days.get(day) || emptyCardDetail();
-}
-
-function cardStateFor(userId) {
-  const days = new Map();
-  const summary = { missedPredictions: 0, yellowCards: 0, redCards: 0, penaltyPoints: 0 };
-  let pendingYellow = 0;
-
-  cardDays().forEach((day) => {
-    const countableMatches = state.matches.filter((match) => match.matchday === day && isCardCountableMatch(match));
-    const missedPredictions = countableMatches.filter((match) => !hasScore(match.predictions[userId])).length;
-    const availableYellows = pendingYellow + missedPredictions;
-    const redCards = Math.min(1, Math.floor(availableYellows / 2));
-    pendingYellow = Math.min(1, Math.max(0, availableYellows - redCards * 2));
-    const detail = {
-      missedPredictions,
-      yellowCards: pendingYellow,
-      redCards,
-      penaltyPoints: redCards * 2,
-    };
-    days.set(day, detail);
-    summary.missedPredictions += detail.missedPredictions;
-    summary.redCards += detail.redCards;
-    summary.penaltyPoints += detail.penaltyPoints;
-  });
-
-  summary.yellowCards = pendingYellow;
-  return { days, summary };
-}
-
-function cardDays() {
-  return [...new Set(state.matches.filter(isMatchdayVisible).map((match) => match.matchday).filter(Boolean))]
-    .filter(isMatchdayStartedOrCompleted)
-    .sort((a, b) => a - b);
-}
-
-function isCardCountableMatch(match) {
-  if (!isMatchdayStartedOrCompleted(match.matchday)) return false;
-  if (state.testMode && match.status === "TEST") return hasResult(match);
-  return isMatchLocked(match);
-}
-
-function emptyCardDetail() {
-  return { missedPredictions: 0, yellowCards: 0, redCards: 0, penaltyPoints: 0 };
-}
-
-function cardBadgesFor(userId) {
-  const cards = cardSummaryFor(userId);
-  const box = document.createElement("span");
-  box.className = "card-badges";
-  if (cards.yellowCards) box.append(cardBadge("yellow", cards.yellowCards));
-  if (cards.redCards) box.append(cardBadge("red", cards.redCards));
-  return box;
-}
-
-function cardBadge(type, count) {
-  const badge = document.createElement("span");
-  badge.className = `card-badge ${type}`;
-  badge.title = type === "red" ? `${count} carton rouge` : `${count} carton jaune`;
-  badge.textContent = count > 1 ? String(count) : "";
-  return badge;
 }
 
 function seasonBonusPointsFor(userId) {
@@ -2586,10 +2580,6 @@ function isMatchLocked(match) {
   const kickoff = new Date(match.date);
   if (Number.isNaN(kickoff.getTime())) return false;
   return Date.now() >= kickoff.getTime();
-}
-
-function isMatchdayStartedOrCompleted(day) {
-  return state.matches.some((match) => match.matchday === day && (isMatchLocked(match) || hasResult(match)));
 }
 
 function isSeasonLocked() {
