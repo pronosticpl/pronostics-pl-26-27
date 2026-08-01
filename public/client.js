@@ -2225,7 +2225,7 @@ function matchdayScoreFor(userId, day) {
       const predB = Number(prediction.b);
       const exactScore = resultA === predA && resultB === predB;
       const goodResult = outcome(resultA, resultB) === outcome(predA, predB);
-      const goodDiff = resultA - resultB === predA - predB;
+      const goodDiff = hasScorableGoalDiff(resultA, resultB, predA, predB);
 
       score.points += pointsFor(match, userId);
       if (exactScore) score.exactScores += 1;
@@ -2283,7 +2283,12 @@ function playerStatsFor(userId) {
   }).length;
   const goodDiffs = predictedMatches.filter((match) => {
     const prediction = match.predictions[userId];
-    return Number(match.result.a) - Number(match.result.b) === Number(prediction.a) - Number(prediction.b);
+    return hasScorableGoalDiff(
+      Number(match.result.a),
+      Number(match.result.b),
+      Number(prediction.a),
+      Number(prediction.b),
+    );
   }).length;
 
   return {
@@ -2332,7 +2337,7 @@ function pointsFor(match, userId) {
   const predB = Number(prediction.b);
   const exactScore = resultA === predA && resultB === predB;
   const sameOutcome = outcome(resultA, resultB) === outcome(predA, predB);
-  const sameDiff = resultA - resultB === predA - predB;
+  const sameDiff = hasScorableGoalDiff(resultA, resultB, predA, predB);
 
   if (exactScore) return 6;
 
@@ -2342,6 +2347,11 @@ function pointsFor(match, userId) {
   if (sameOutcome) points += 3;
   if (sameDiff) points += 2;
   return points;
+}
+
+function hasScorableGoalDiff(resultA, resultB, predA, predB) {
+  if (resultA === resultB) return false;
+  return resultA - resultB === predA - predB;
 }
 
 function updatePrediction(matchId, userId, side, value) {
