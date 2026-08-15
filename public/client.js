@@ -2223,7 +2223,7 @@ function matchdayDetailsFor(userId) {
 }
 
 function matchdayScoreFor(userId, day) {
-  const matches = state.matches.filter((match) => match.matchday === day && hasResult(match));
+  const matches = state.matches.filter((match) => match.matchday === day && hasCountableResult(match));
   return matches.reduce(
     (score, match) => {
       const prediction = match.predictions[userId];
@@ -2271,7 +2271,7 @@ function seasonBonusDetailsFor(userId) {
 }
 
 function playerStatsFor(userId) {
-  const resultMatches = state.matches.filter((match) => hasResult(match));
+  const resultMatches = state.matches.filter((match) => hasCountableResult(match));
   const predictedMatches = resultMatches.filter((match) => hasScore(match.predictions[userId]));
   const matchPoints = resultMatches.reduce((sum, match) => sum + pointsFor(match, userId), 0);
   const dayWins = matchdayDetailsFor(userId).filter((detail) => detail.winner).length;
@@ -2337,7 +2337,7 @@ function individualBonusMatchesOfficial(prediction, official) {
 }
 
 function pointsFor(match, userId) {
-  if (!hasResult(match)) return 0;
+  if (!hasCountableResult(match)) return 0;
   const prediction = match.predictions[userId];
   if (!hasScore(prediction)) return 0;
 
@@ -2591,7 +2591,7 @@ function matchMeta(match) {
 }
 
 function officialScoreLabel(match) {
-  if (!hasResult(match)) return "En attente API";
+  if (!hasCountableResult(match)) return "En attente API";
   return `${match.result.a} - ${match.result.b}`;
 }
 
@@ -2684,6 +2684,10 @@ function requireAdmin() {
 
 function hasResult(match) {
   return hasScore(match?.result);
+}
+
+function hasCountableResult(match) {
+  return hasResult(match) && String(match.status || "").toUpperCase() === "FINISHED";
 }
 
 function hasScore(score) {
