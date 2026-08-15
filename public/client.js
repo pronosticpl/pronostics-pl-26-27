@@ -2316,10 +2316,12 @@ function playerStatsFor(userId) {
 }
 
 function seasonBonusPointsFor(userId) {
+  if (!isSeasonLocked()) return 0;
   return seasonBonusCategories.reduce((sum, category) => sum + seasonBonusCategoryPoints(userId, category), 0);
 }
 
 function seasonBonusCategoryPoints(userId, category) {
+  if (!isSeasonLocked()) return 0;
   const prediction = state.seasonBonus.predictions[userId]?.[category.id] ?? "";
   const official = state.seasonBonus.official[category.id] ?? "";
   if (!prediction || !official) return 0;
