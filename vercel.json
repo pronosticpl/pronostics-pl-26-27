@@ -6,6 +6,7 @@
   ],
   "routes": [
     { "src": "/api/premier-league", "dest": "/api/premier-league.js" },
+    { "src": "/api/sync-results", "dest": "/api/sync-results.js" },
     { "src": "/api/state", "dest": "/api/state.js" },
     { "src": "/api/key", "dest": "/api/key.js" },
     { "src": "/assets/(.*)", "dest": "/public/assets/$1" },
@@ -23,5 +24,8 @@
         { "key": "Cache-Control", "value": "no-store, max-age=0" }
       ]
     }
+  ],
+  "crons": [
+    { "path": "/api/sync-results", "schedule": "*/2 * * * *" }
   ]
 }
