@@ -1175,7 +1175,7 @@ els.saveKeyBtn.addEventListener("click", async () => {
 
 els.importLeagueBtn.addEventListener("click", () => syncPremierLeague());
 els.syncBtn.addEventListener("click", () => syncPremierLeague());
-els.testModeBtn.addEventListener("click", () => applyTestMode());
+els.testModeBtn?.addEventListener("click", () => applyTestMode());
 
 els.resetBtn.addEventListener("click", () => {
   if (!requireAdmin()) return;
@@ -1432,9 +1432,19 @@ function removeDemoMatches() {
   state.matches = state.matches.filter((match) => {
     const externalId = String(match.externalId ?? "");
     const id = String(match.id ?? "");
-    return !externalId.startsWith("demo-") && !externalId.startsWith("sample-") && !id.startsWith("demo-");
+    return (
+      match.status !== "TEST" &&
+      !externalId.startsWith("test-") &&
+      !externalId.startsWith("demo-") &&
+      !externalId.startsWith("sample-") &&
+      !id.startsWith("test-") &&
+      !id.startsWith("demo-")
+    );
   });
-  return state.matches.length !== before;
+  const changed = state.matches.length !== before || state.testMode || localStorage.getItem(testModeStorageKey);
+  state.testMode = false;
+  localStorage.removeItem(testModeStorageKey);
+  return changed;
 }
 
 function render() {
@@ -1500,7 +1510,7 @@ function renderSession() {
 function renderSeasonBonus() {
   const user = currentUser();
   const locked = isSeasonLocked();
-  const predictionLocked = locked && !state.testMode;
+  const predictionLocked = locked;
   els.seasonBonusList.innerHTML = "";
   els.seasonBonusTotal.textContent = user ? `${seasonBonusPointsFor(user.id)} pts` : "0";
 
@@ -1545,7 +1555,7 @@ function renderSeasonBonus() {
     els.seasonBonusList.append(row);
   });
 
-  if (locked || state.testMode) {
+  if (locked) {
     els.seasonBonusList.append(renderPublicSeasonBonus());
   }
 }
@@ -2742,20 +2752,12 @@ async function loadRemoteState(force = false) {
       await saveRemoteState();
       return;
     }
-    const wasTesting = state.testMode || localStorage.getItem(testModeStorageKey) === "true";
-    const testMatches = state.matches.filter((match) => match.status === "TEST");
     state = mergeClientStates(state, migrateState(payload.state));
-    if (wasTesting) {
-      state.testMode = true;
-      const existingIds = new Set(state.matches.map((match) => match.externalId || match.id));
-      testMatches.forEach((match) => {
-        const key = match.externalId || match.id;
-        if (!existingIds.has(key)) state.matches.push(match);
-      });
-    }
+    const cleanedTests = removeDemoMatches();
     localStorage.setItem(storageKey, JSON.stringify(state));
     render();
     setRemoteStatus(`Synchro OK · ${state.users.length} joueur${state.users.length > 1 ? "s" : ""}`);
+    if (cleanedTests) queueRemoteSave();
   } catch (error) {
     setRemoteStatus("Erreur synchro");
     console.error(error);
@@ -2787,6 +2789,8 @@ function isEditingField() {
 function stateForRemote() {
   const copy = structuredClone(state);
   delete copy.currentUserId;
+  copy.testMode = false;
+  copy.matches = copy.matches.filter((match) => match.status !== "TEST");
   return copy;
 }
 
@@ -2800,7 +2804,7 @@ function mergeClientStates(localState, remoteState) {
     ...localState,
     deletedUsers,
     users: userMerge.users,
-    matches: mergeClientMatches(remoteState.matches, localState.matches, userMerge.aliases, deletedUsers),
+    matches: mergeClientMatches(remoteState.matches, localState.matches, userMerge.aliases, deletedUsers).filter((match) => match.status !== "TEST"),
     playersByTeam: mergePlayersByTeam(remoteState.playersByTeam, localState.playersByTeam),
     seasonBonus: mergeClientSeasonBonus(remoteState.seasonBonus, localState.seasonBonus, userMerge.aliases, deletedUsers),
   };
@@ -2980,7 +2984,7 @@ function migrateState(raw) {
   if (Array.isArray(raw.friends)) {
     next.users = raw.friends.map((friend) => ({ ...friend, pin: friend.pin ?? "1234" }));
   }
-  if (Array.isArray(raw.matches)) next.matches = raw.matches.map((match) => ({
+  if (Array.isArray(raw.matches)) next.matches = raw.matches.filter((match) => match.status !== "TEST").map((match) => ({
     id: match.id ?? crypto.randomUUID(),
     externalId: match.externalId ?? null,
     teamA: match.teamA,
@@ -3000,7 +3004,8 @@ function migrateState(raw) {
   next.currentUserId = raw.currentUserId ?? null;
   next.matchdayFilter = raw.matchdayFilter ?? "all";
   next.lastSync = raw.lastSync ?? null;
-  next.testMode = Boolean(raw.testMode) || localStorage.getItem(testModeStorageKey) === "true";
+  next.testMode = false;
+  localStorage.removeItem(testModeStorageKey);
   return next;
 }
 
