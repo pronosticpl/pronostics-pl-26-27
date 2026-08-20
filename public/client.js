@@ -1545,13 +1545,16 @@ function renderSeasonBonus() {
       input.title = predictionLocked ? "Bonus verrouillé après le début du championnat" : "";
     });
     const officialLabel = row.querySelector(".admin-only");
-    officialLabel.hidden = false;
-    setBonusControlsValue(row, category, "official", state.seasonBonus.official[category.id] ?? "");
-    row.querySelectorAll('[data-role="official"]').forEach((input) => {
-      input.disabled = !isAdmin() && input.tagName === "SELECT";
-      input.readOnly = !isAdmin() && input.tagName !== "SELECT";
-      input.title = isAdmin() ? "" : "Réponse officielle modifiable uniquement par l'admin";
-    });
+    const showOfficial = isAdmin() || locked;
+    officialLabel.hidden = !showOfficial;
+    if (showOfficial) {
+      setBonusControlsValue(row, category, "official", state.seasonBonus.official[category.id] ?? "");
+      row.querySelectorAll('[data-role="official"]').forEach((input) => {
+        input.disabled = !isAdmin() && input.tagName === "SELECT";
+        input.readOnly = !isAdmin() && input.tagName !== "SELECT";
+        input.title = isAdmin() ? "" : "Réponse officielle modifiable uniquement par l'admin";
+      });
+    }
     els.seasonBonusList.append(row);
   });
 
