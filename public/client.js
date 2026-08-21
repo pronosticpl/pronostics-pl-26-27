@@ -2800,6 +2800,12 @@ function stateForRemote() {
   delete copy.currentUserId;
   copy.testMode = false;
   copy.matches = copy.matches.filter((match) => match.status !== "TEST");
+  if (!isAdmin()) {
+    copy.seasonBonus = {
+      ...(copy.seasonBonus || {}),
+      official: undefined,
+    };
+  }
   return copy;
 }
 
@@ -2916,7 +2922,7 @@ function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}, aliases = {},
   return {
     official: {
       ...(remoteBonus.official || {}),
-      ...(localBonus.official || {}),
+      ...(isAdmin() ? localBonus.official || {} : {}),
     },
     predictions: mergeClientBonusPredictions(remoteBonus.predictions, localBonus.predictions, aliases, deletedUsers),
   };
