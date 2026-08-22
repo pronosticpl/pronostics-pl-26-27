@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Pronostics PL" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260822-bonustop" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260822-bonustop" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260822-bonustop" />
-    <link rel="stylesheet" href="styles.css?v=20260822-bonustop" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260822-bonusmain" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260822-bonusmain" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260822-bonusmain" />
+    <link rel="stylesheet" href="styles.css?v=20260822-bonusmain" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
@@ -116,6 +116,10 @@
               <button class="ghost-button" id="saveKeyBtn" type="button">Garder la clé</button>
               <button class="ghost-button" id="importLeagueBtn" type="button">Importer PL</button>
               <p id="syncStatus">Importe les vrais matchs Premier League 2026-2027 avec ta clé API.</p>
+            </div>
+
+            <div class="admin-maintenance admin-only">
+              <button class="danger-button wide-button" type="button" data-clear-official-bonus>Effacer bonus officiels</button>
             </div>
 
             <form class="match-form admin-only" id="matchForm">
@@ -244,6 +248,6 @@
       </article>
     </template>
 
-    <script src="client.js?v=20260822-bonustop"></script>
+    <script src="client.js?v=20260822-bonusmain"></script>
   </body>
 </html>

@@ -728,6 +728,14 @@ form button {
   width: 100%;
 }
 
+.admin-maintenance {
+  margin: 10px 0;
+}
+
+.admin-maintenance .wide-button {
+  width: 100%;
+}
+
 .bonus-row {
   display: grid;
   grid-template-columns: minmax(150px, 0.9fr) minmax(170px, 1fr) minmax(170px, 1fr) 70px;
