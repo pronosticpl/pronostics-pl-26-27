@@ -958,7 +958,7 @@ const els = {
   leaderboard: document.querySelector("#leaderboard"),
   pointsDetail: document.querySelector("#pointsDetail"),
   resetBtn: document.querySelector("#resetBtn"),
-  clearOfficialBonusBtn: document.querySelector("#clearOfficialBonusBtn"),
+  clearOfficialBonusButtons: document.querySelectorAll("[data-clear-official-bonus]"),
   exportBtn: document.querySelector("#exportBtn"),
   exportExcelBtn: document.querySelector("#exportExcelBtn"),
   importInput: document.querySelector("#importInput"),
@@ -1186,7 +1186,7 @@ els.resetBtn.addEventListener("click", () => {
   persist();
 });
 
-els.clearOfficialBonusBtn?.addEventListener("click", () => {
+els.clearOfficialBonusButtons.forEach((button) => button.addEventListener("click", () => {
   if (!isAdmin()) {
     alert("Action réservée à Norbert/admin.");
     return;
@@ -1194,7 +1194,7 @@ els.clearOfficialBonusBtn?.addEventListener("click", () => {
   if (!confirm("Effacer uniquement les réponses officielles des bonus saison ?")) return;
   state.seasonBonus.official = {};
   persist();
-});
+}));
 
 els.exportBtn.addEventListener("click", () => {
   if (!requireAdmin()) return;
