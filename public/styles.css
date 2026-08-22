@@ -720,6 +720,14 @@ form button {
   gap: 10px;
 }
 
+.admin-bonus-actions {
+  margin: -4px 0 12px;
+}
+
+.admin-bonus-actions .wide-button {
+  width: 100%;
+}
+
 .bonus-row {
   display: grid;
   grid-template-columns: minmax(150px, 0.9fr) minmax(170px, 1fr) minmax(170px, 1fr) 70px;

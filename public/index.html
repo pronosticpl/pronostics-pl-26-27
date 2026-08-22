@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Pronostics PL" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260822-bonusclear" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260822-bonusclear" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260822-bonusclear" />
-    <link rel="stylesheet" href="styles.css?v=20260822-bonusclear" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260822-bonusbutton" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260822-bonusbutton" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260822-bonusbutton" />
+    <link rel="stylesheet" href="styles.css?v=20260822-bonusbutton" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
@@ -157,8 +157,10 @@
           <div class="panel">
             <div class="panel-header">
               <h3>Bonus saison</h3>
-              <button class="ghost-button admin-only" id="clearOfficialBonusBtn" type="button">Effacer réponses officielles</button>
               <span id="seasonBonusTotal">0</span>
+            </div>
+            <div class="admin-bonus-actions admin-only">
+              <button class="ghost-button wide-button" id="clearOfficialBonusBtn" type="button">Effacer réponses officielles</button>
             </div>
             <div class="bonus-grid" id="seasonBonusList"></div>
           </div>
@@ -241,6 +243,6 @@
       </article>
     </template>
 
-    <script src="client.js?v=20260822-bonusclear"></script>
+    <script src="client.js?v=20260822-bonusbutton"></script>
   </body>
 </html>
