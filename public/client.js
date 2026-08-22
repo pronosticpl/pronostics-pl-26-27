@@ -1187,7 +1187,10 @@ els.resetBtn.addEventListener("click", () => {
 });
 
 els.clearOfficialBonusBtn?.addEventListener("click", () => {
-  if (!requireAdmin()) return;
+  if (!isAdmin()) {
+    alert("Action réservée à Norbert/admin.");
+    return;
+  }
   if (!confirm("Effacer uniquement les réponses officielles des bonus saison ?")) return;
   state.seasonBonus.official = {};
   persist();
