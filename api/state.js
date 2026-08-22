@@ -221,11 +221,9 @@ function newestPredictionValue(previous = {}, prediction = {}, side) {
 }
 
 function mergeSeasonBonus(storedBonus = {}, incomingBonus = {}, aliases = {}, deletedUsers = {}) {
+  const hasIncomingOfficial = Object.prototype.hasOwnProperty.call(incomingBonus || {}, "official");
   return {
-    official: {
-      ...(storedBonus.official || {}),
-      ...(incomingBonus.official || {}),
-    },
+    official: hasIncomingOfficial ? (incomingBonus.official || {}) : (storedBonus.official || {}),
     predictions: mergeBonusPredictions(storedBonus.predictions, incomingBonus.predictions, aliases, deletedUsers),
   };
 }
