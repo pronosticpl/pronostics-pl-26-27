@@ -958,6 +958,7 @@ const els = {
   leaderboard: document.querySelector("#leaderboard"),
   pointsDetail: document.querySelector("#pointsDetail"),
   resetBtn: document.querySelector("#resetBtn"),
+  clearOfficialBonusBtn: document.querySelector("#clearOfficialBonusBtn"),
   exportBtn: document.querySelector("#exportBtn"),
   exportExcelBtn: document.querySelector("#exportExcelBtn"),
   importInput: document.querySelector("#importInput"),
@@ -1182,6 +1183,13 @@ els.resetBtn.addEventListener("click", () => {
   if (!confirm("Tout effacer ?")) return;
   localStorage.removeItem(testModeStorageKey);
   state = structuredClone(defaultState);
+  persist();
+});
+
+els.clearOfficialBonusBtn?.addEventListener("click", () => {
+  if (!requireAdmin()) return;
+  if (!confirm("Effacer uniquement les réponses officielles des bonus saison ?")) return;
+  state.seasonBonus.official = {};
   persist();
 });
 
@@ -2919,11 +2927,9 @@ function newestPredictionValue(previous = {}, prediction = {}, side) {
 }
 
 function mergeClientSeasonBonus(remoteBonus = {}, localBonus = {}, aliases = {}, deletedUsers = {}) {
+  const adminHasLocalOfficial = isAdmin() && Object.prototype.hasOwnProperty.call(localBonus || {}, "official");
   return {
-    official: {
-      ...(remoteBonus.official || {}),
-      ...(isAdmin() ? localBonus.official || {} : {}),
-    },
+    official: adminHasLocalOfficial ? (localBonus.official || {}) : (remoteBonus.official || {}),
     predictions: mergeClientBonusPredictions(remoteBonus.predictions, localBonus.predictions, aliases, deletedUsers),
   };
 }
