@@ -332,6 +332,21 @@ select {
   min-width: 520px;
 }
 
+.round-table {
+  min-width: 430px;
+}
+
+.mini-button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: #e8efe6;
+  color: var(--green-dark);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .admin-actions {
   display: flex;
   flex-wrap: wrap;

@@ -153,6 +153,24 @@
           </section>
 
           <section class="admin-block">
+            <h3>Journées enregistrées</h3>
+            <div class="table-wrap">
+              <table class="admin-table round-table">
+                <thead>
+                  <tr>
+                    <th>Journée</th>
+                    <th>Statut</th>
+                    <th>Vainqueur</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="roundHistoryBody"></tbody>
+              </table>
+            </div>
+            <p class="hint">Reprendre remet les points de cette journée dans les champs Admin pour pouvoir corriger ou valider plus tard.</p>
+          </section>
+
+          <section class="admin-block">
             <h3>Bonus officiels</h3>
             <div class="official-form" id="officialForm"></div>
           </section>
@@ -182,6 +200,6 @@
       </section>
     </main>
 
-    <script src="client.js?v=20260823-construction-admin"></script>
+    <script src="client.js?v=20260823-round-table"></script>
   </body>
 </html>

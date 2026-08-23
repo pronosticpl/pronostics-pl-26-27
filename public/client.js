@@ -120,6 +120,7 @@ const els = {
   evolutionChart: document.querySelector("#evolutionChart"),
   officialForm: document.querySelector("#officialForm"),
   adminPointsBody: document.querySelector("#adminPointsBody"),
+  roundHistoryBody: document.querySelector("#roundHistoryBody"),
   roundInput: document.querySelector("#roundInput"),
   roundStatus: document.querySelector("#roundStatus"),
   saveAdminBtn: document.querySelector("#saveAdminBtn"),
@@ -134,6 +135,7 @@ els.tabs.forEach((tab) => {
 });
 els.saveAdminBtn.addEventListener("click", saveAdminValues);
 els.resetAdminBtn.addEventListener("click", resetAdminValues);
+els.roundHistoryBody.addEventListener("click", handleRoundHistoryClick);
 
 if (sessionStorage.getItem(accessKey) === "ok") {
   unlockSite();
@@ -345,6 +347,7 @@ function renderEvolution() {
 function renderAdmin() {
   els.roundInput.value = state.currentRound || "";
   els.roundStatus.value = state.currentRoundStatus || "complete";
+  renderRoundHistory();
   els.officialForm.innerHTML = "";
   categories.forEach((category) => {
     const label = document.createElement("label");
@@ -367,6 +370,47 @@ function renderAdmin() {
     `;
     els.adminPointsBody.append(row);
   });
+}
+
+function renderRoundHistory() {
+  const history = normalizeHistory(state.history);
+  if (!history.length) {
+    els.roundHistoryBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="muted">Aucune journée enregistrée.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  els.roundHistoryBody.innerHTML = history.map((entry, index) => {
+    const winner = dayWinnerForEntry(history, index);
+    return `
+      <tr>
+        <td>J${entry.round}</td>
+        <td>${entry.complete ? "Complète" : "Incomplète"}</td>
+        <td>${entry.complete ? escapeHtml(winner || "-") : "Pas encore"}</td>
+        <td><button class="mini-button" type="button" data-load-round="${entry.round}">Reprendre</button></td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function handleRoundHistoryClick(event) {
+  const button = event.target.closest("[data-load-round]");
+  if (!button) return;
+  const round = numberOrZero(button.dataset.loadRound);
+  const entry = normalizeHistory(state.history).find((item) => item.round === round);
+  if (!entry) return;
+
+  state.currentRound = String(entry.round);
+  state.currentRoundStatus = entry.complete ? "complete" : "incomplete";
+  players.forEach((player) => {
+    if (!state.points[player]) state.points[player] = { bonus: 0, pronostics: 0 };
+    state.points[player].pronostics = numberOrZero(entry.pronostics?.[player]);
+  });
+  renderAdmin();
+  els.adminStatus.textContent = `Journée ${entry.round} reprise. Modifie si besoin, puis clique sur Enregistrer.`;
 }
 
 async function saveAdminValues() {
@@ -467,6 +511,13 @@ function latestDayWinner() {
   const latest = [...orderedHistory].reverse().find((entry) => entry.complete);
   if (!latest) return "";
   const latestIndex = orderedHistory.findIndex((entry) => entry.round === latest.round);
+  const winner = dayWinnerForEntry(orderedHistory, latestIndex);
+  return winner ? `J${latest.round}: ${winner}` : "";
+}
+
+function dayWinnerForEntry(orderedHistory, latestIndex) {
+  const latest = orderedHistory[latestIndex];
+  if (!latest?.complete) return "";
   const previous = latestIndex > 0 ? orderedHistory[latestIndex - 1] : null;
   const scores = players.map((player) => ({
     player,
@@ -478,7 +529,7 @@ function latestDayWinner() {
   const winner = scores
     .filter((score) => score.points === best)
     .sort((a, b) => (rankingOrder.get(a.player) ?? 999) - (rankingOrder.get(b.player) ?? 999))[0];
-  return `J${latest.round}: ${winner.player} (${best} pts)`;
+  return `${winner.player} (${best} pts)`;
 }
 
 function officialMatchesFor(player) {
