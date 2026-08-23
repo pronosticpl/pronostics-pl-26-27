@@ -1,4 +1,5 @@
 const storageKey = "novaprono-construction-admin-v1";
+const remoteStateKey = "bonusAdmin";
 const accessKey = "novaprono-admin-access-v1";
 const adminName = "norbert";
 const adminPassword = "1234";
@@ -135,13 +136,13 @@ if (sessionStorage.getItem(accessKey) === "ok") {
 function loadState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(storageKey) || "null");
-    return mergeState(parsed);
+    return mergeMiniState(parsed);
   } catch {
     return structuredClone(defaultState);
   }
 }
 
-function mergeState(saved) {
+function mergeMiniState(saved) {
   const next = structuredClone(defaultState);
   if (!saved || typeof saved !== "object") return next;
 
@@ -162,6 +163,35 @@ function mergeState(saved) {
 
 function persist() {
   localStorage.setItem(storageKey, JSON.stringify(state));
+}
+
+async function syncFromRemote() {
+  try {
+    els.adminStatus.textContent = "Lecture Supabase...";
+    const response = await fetch("/api/state", { cache: "no-store" });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || payload.error || "Lecture impossible");
+
+    state = mergeMiniState(payload.state?.[remoteStateKey]);
+    persist();
+    render();
+    els.adminStatus.textContent = "Données Supabase chargées.";
+  } catch (error) {
+    els.adminStatus.textContent = `Synchro impossible: ${error.message}`;
+  }
+}
+
+async function saveToRemote() {
+  persist();
+  const response = await fetch("/api/state", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ state: { [remoteStateKey]: state } }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.detail || payload.error || "Sauvegarde impossible");
+  state = mergeMiniState(payload.state?.[remoteStateKey]);
+  persist();
 }
 
 function render() {
@@ -191,6 +221,7 @@ function unlockSite() {
   els.appShell.hidden = false;
   els.accessError.hidden = true;
   render();
+  syncFromRemote();
 }
 
 function lockSite() {
@@ -280,7 +311,7 @@ function renderAdmin() {
   });
 }
 
-function saveAdminValues() {
+async function saveAdminValues() {
   document.querySelectorAll("[data-official]").forEach((input) => {
     state.official[input.dataset.official] = input.value.trim();
   });
@@ -291,20 +322,29 @@ function saveAdminValues() {
     state.points[player].pronostics = numberOrZero(input.value);
   });
 
-  persist();
-  renderRanking();
-  els.adminStatus.textContent = "Enregistré.";
-  setTimeout(() => {
-    els.adminStatus.textContent = "Les changements restent sauvegardés dans ce navigateur.";
-  }, 1800);
+  render();
+  els.adminStatus.textContent = "Sauvegarde Supabase...";
+  try {
+    await saveToRemote();
+    render();
+    els.adminStatus.textContent = "Enregistré dans Supabase.";
+  } catch (error) {
+    els.adminStatus.textContent = `Erreur synchro: ${error.message}`;
+  }
 }
 
-function resetAdminValues() {
+async function resetAdminValues() {
   if (!confirm("Remettre à zéro les réponses officielles et les points ?")) return;
   state = structuredClone(defaultState);
-  persist();
   render();
-  els.adminStatus.textContent = "Remis à zéro.";
+  els.adminStatus.textContent = "Remise à zéro Supabase...";
+  try {
+    await saveToRemote();
+    render();
+    els.adminStatus.textContent = "Remis à zéro dans Supabase.";
+  } catch (error) {
+    els.adminStatus.textContent = `Erreur synchro: ${error.message}`;
+  }
 }
 
 function officialMatchesFor(player) {
