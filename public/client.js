@@ -237,7 +237,6 @@ function renderRanking() {
         player,
         bonus: bonusPointsFor(player),
         pronostics: numberOrZero(points.pronostics),
-        officialCount: officialMatchesFor(player),
       };
     })
     .map((row) => ({ ...row, total: row.bonus + row.pronostics }))
@@ -250,7 +249,6 @@ function renderRanking() {
       <td>${escapeHtml(row.player)}</td>
       <td>${row.bonus}</td>
       <td>${row.pronostics}</td>
-      <td>${row.officialCount}/7</td>
       <td><strong>${row.total}</strong></td>
     `;
     els.rankingBody.append(tr);
