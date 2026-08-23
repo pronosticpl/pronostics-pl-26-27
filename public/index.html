@@ -6,248 +6,105 @@
     <title>Pronostics PL 26 -27</title>
     <meta http-equiv="Cache-Control" content="no-store" />
     <meta name="theme-color" content="#1f6b43" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Pronostics PL" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260823-bonus-no-points" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260823-bonus-no-points" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260823-bonus-no-points" />
-    <link rel="stylesheet" href="styles.css?v=20260823-bonus-no-points" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260823-construction-admin" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260823-construction-admin" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260823-construction-admin" />
+    <link rel="stylesheet" href="styles.css?v=20260823-construction-admin" />
   </head>
   <body>
-    <section class="access-gate" id="accessGate">
-      <form class="access-card" id="accessForm">
-        <span class="brand-mark" aria-hidden="true">PL</span>
-        <h1>Pronostics PL 26 -27</h1>
-        <label>
-          Mot de passe
-          <input id="accessPassword" type="password" autocomplete="current-password" />
-        </label>
-        <button class="primary-button" type="submit">Entrer</button>
-        <p class="access-error" id="accessError" hidden>Mot de passe incorrect.</p>
-      </form>
-    </section>
-
-    <div class="app-shell" id="appShell" hidden>
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand-mark" aria-hidden="true">PL</span>
-          <div>
-            <h1>Pronostics PL 26 -27</h1>
-          </div>
+    <main class="app">
+      <section class="construction-card">
+        <span class="brand-mark">PL</span>
+        <div>
+          <h1>En construction</h1>
+          <p>Le site Pronostics PL 26 -27 est temporairement inaccessible pendant la mise à jour.</p>
         </div>
-        <div class="top-actions">
-          <span class="session-pill" id="sessionLabel">Non connecté</span>
-          <button class="ghost-button" id="refreshStateBtn" type="button">Synchroniser</button>
-          <span class="sync-pill" id="remoteStatus">Synchro...</span>
-          <button class="ghost-button admin-only" id="exportBtn" type="button">Exporter</button>
-          <button class="ghost-button admin-only" id="exportExcelBtn" type="button">Excel</button>
-          <label class="import-button admin-only">
-            Importer
-            <input id="importInput" type="file" accept="application/json" />
-          </label>
-          <button class="ghost-button admin-only" type="button" data-clear-official-bonus>Effacer bonus officiels</button>
-          <button class="danger-button admin-only" id="resetBtn" type="button">Reset</button>
+      </section>
+
+      <nav class="tabs" aria-label="Navigation">
+        <button class="tab is-active" type="button" data-tab="bonus">Pronostics bonus</button>
+        <button class="tab" type="button" data-tab="classement">Classement</button>
+        <button class="tab" type="button" data-tab="admin">Admin</button>
+      </nav>
+
+      <section class="panel is-active" id="bonusPanel" data-panel="bonus">
+        <div class="panel-header">
+          <h2>Pronostics bonus</h2>
+          <span id="bonusCount">0 choix</span>
         </div>
-      </header>
+        <div class="table-wrap">
+          <table class="bonus-table">
+            <thead>
+              <tr>
+                <th>Joueur</th>
+                <th>Bonus</th>
+                <th>Choix</th>
+              </tr>
+            </thead>
+            <tbody id="bonusBody"></tbody>
+          </table>
+        </div>
+      </section>
 
-      <main>
-        <section class="hero">
-          <div class="hero-copy">
-            <h2>Pronostics PL 26 -27</h2>
-          </div>
-          <div class="hero-stat">
-            <span id="nextMatchLabel">Début du championnat</span>
-            <strong id="nextMatchTeams">Importe la saison 26-27</strong>
-          </div>
-        </section>
+      <section class="panel" id="classementPanel" data-panel="classement">
+        <div class="panel-header">
+          <h2>Classement</h2>
+          <span>Rempli par admin</span>
+        </div>
+        <div class="table-wrap">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>Rang</th>
+                <th>Joueur</th>
+                <th>Points bonus</th>
+                <th>Points pronostics</th>
+                <th>Bonus officiels</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="rankingBody"></tbody>
+          </table>
+        </div>
+      </section>
 
-        <nav class="mobile-tabs" aria-label="Navigation mobile">
-          <button class="mobile-tab" type="button" data-mobile-tab="login">Connexion</button>
-          <button class="mobile-tab is-active" type="button" data-mobile-tab="matches">Bonus</button>
-          <button class="mobile-tab" type="button" data-mobile-tab="standing">Classement</button>
-          <button class="mobile-tab" type="button" data-mobile-tab="bonus">Bonus</button>
-          <button class="mobile-tab" type="button" data-mobile-tab="rules">Règlement</button>
-        </nav>
+      <section class="panel" id="adminPanel" data-panel="admin">
+        <div class="panel-header">
+          <h2>Admin Norbert</h2>
+          <span>Champs à remplir</span>
+        </div>
 
-        <section class="dashboard">
-          <aside class="panel" data-mobile-panel="login">
-            <div class="panel-header">
-              <h3>Connexion</h3>
-              <span id="friendCount">0</span>
-            </div>
-            <form class="inline-form" id="signupForm">
-              <input id="signupName" type="text" placeholder="Pseudo" autocomplete="username" required />
-              <input id="signupPin" type="password" placeholder="Code PIN" autocomplete="new-password" required />
-              <label class="file-field">
-                Photo / avatar
-                <input id="signupAvatar" type="file" accept="image/*" />
-              </label>
-              <button type="submit">S'inscrire</button>
-            </form>
-            <form class="inline-form split-form" id="loginForm">
-              <select id="loginUser" required></select>
-              <input id="loginPin" type="password" placeholder="PIN" autocomplete="current-password" required />
-              <button type="submit">Se connecter</button>
-            </form>
-            <button class="ghost-button wide-button" id="forgotPinBtn" type="button">PIN oublié</button>
-            <button class="ghost-button wide-button" id="changePinBtn" type="button">Changer mon PIN</button>
-            <button class="ghost-button wide-button" id="logoutBtn" type="button">Déconnexion</button>
-            <div class="avatar-panel" id="avatarPanel" hidden>
-              <div class="avatar-preview" id="avatarPreview"></div>
-              <label class="file-field compact-file">
-                Changer photo
-                <input id="avatarInput" type="file" accept="image/*" />
-              </label>
-            </div>
-            <ul class="friend-list" id="friendList"></ul>
-          </aside>
-
-          <section class="panel main-panel" data-mobile-panel="matches">
-            <div class="panel-header">
-              <h3>Pronostics bonus</h3>
-              <div class="compact-actions">
-                <button class="subtle-button admin-only" id="syncBtn" type="button">Mettre à jour</button>
-              </div>
-            </div>
-
-            <div class="sync-box admin-only" hidden>
-              <input id="apiKey" type="password" placeholder="Clé football-data.org pour importer PL 26-27" />
-              <button class="ghost-button" id="saveKeyBtn" type="button">Garder la clé</button>
-              <button class="ghost-button" id="importLeagueBtn" type="button">Importer PL</button>
-              <p id="syncStatus">Importe les vrais matchs Premier League 2026-2027 avec ta clé API.</p>
-            </div>
-
-            <div class="admin-maintenance admin-only" hidden>
-              <button class="danger-button wide-button" type="button" data-clear-official-bonus>Effacer bonus officiels</button>
-            </div>
-
-            <form class="match-form admin-only" id="matchForm" hidden>
-              <input id="teamA" type="text" placeholder="Équipe domicile" autocomplete="off" required />
-              <input id="teamB" type="text" placeholder="Équipe extérieur" autocomplete="off" required />
-              <input id="matchDate" type="datetime-local" />
-              <input id="matchday" type="number" min="1" placeholder="Journée" />
-              <button type="submit">Ajouter</button>
-            </form>
-
-            <div class="filter-row" hidden>
-              <label>
-                Journée
-                <select id="matchdayFilter"></select>
-              </label>
-            </div>
-
-            <div class="match-list" id="matchList"></div>
+        <div class="admin-grid">
+          <section class="admin-block">
+            <h3>Bonus officiels</h3>
+            <div class="official-form" id="officialForm"></div>
           </section>
 
-          <aside class="panel" data-mobile-panel="standing">
-            <div class="panel-header">
-              <h3>Classement</h3>
-              <span id="matchCount" hidden>0</span>
+          <section class="admin-block">
+            <h3>Points des joueurs</h3>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Joueur</th>
+                    <th>Points bonus</th>
+                    <th>Points pronostics</th>
+                  </tr>
+                </thead>
+                <tbody id="adminPointsBody"></tbody>
+              </table>
             </div>
-            <div class="leaderboard" id="leaderboard"></div>
-            <div class="points-detail" id="pointsDetail"></div>
-            <div class="stats-block">
-              <div class="panel-header">
-                <h3>Stats joueurs</h3>
-                <span id="statsCount">0</span>
-              </div>
-              <h4 class="subsection-title">Stats individuelles</h4>
-              <div class="player-stats" id="playerStats"></div>
-            </div>
-          </aside>
-        </section>
-
-        <section class="bonus-section" data-mobile-panel="bonus">
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Bonus saison</h3>
-              <span id="seasonBonusTotal">0</span>
-            </div>
-            <div class="admin-bonus-actions">
-              <button class="ghost-button wide-button" type="button" data-clear-official-bonus>Effacer réponses officielles bonus</button>
-            </div>
-            <div class="bonus-grid" id="seasonBonusList"></div>
-          </div>
-        </section>
-
-        <section class="rules-section" data-mobile-panel="rules">
-          <div class="panel">
-            <div class="panel-header">
-              <h3>Règlement / installation</h3>
-            </div>
-            <div class="rules rules-page">
-              <strong>Barème des matchs</strong>
-              <span>1 pt par score d'équipe trouvé</span>
-              <span>+2 pts bon écart de buts, sauf match nul</span>
-              <span>+3 pts bon résultat</span>
-              <span>+2 pts score exact</span>
-
-              <strong>Bonus saison</strong>
-              <span>10 pts champion</span>
-              <span>5 pts meilleure attaque</span>
-              <span>5 pts meilleure défense</span>
-              <span>3 pts meilleur buteur</span>
-              <span>3 pts meilleur passeur</span>
-              <span>3 pts meilleur gardien</span>
-              <span>3 pts meilleur joueur</span>
-              <span>Les bonus sont mis à jour manuellement par l'admin après chaque journée, selon les listes officielles Premier League.</span>
-              <span>Le bonus meilleur joueur est mis à jour à la fin du championnat.</span>
-
-              <strong>Prize money</strong>
-              <span>1er : 40 francs x nombre de participants</span>
-              <span>2eme : repas et boisson offerte, maximum 50 francs, payé par tous les participants présents ou non au repas</span>
-              <span>3eme : boisson offerte, maximum 20 francs, payé par tous les participants présents ou non au repas</span>
-
-              <strong>Règlement pronostics</strong>
-              <span>Avant le début du match : personne ne voit les pronostics des autres joueurs.</span>
-              <span>Même l'admin Norbert ne les voit pas avant le début.</span>
-              <span>Dès que l'heure du match est passée : le pronostic est bloqué.</span>
-              <span>Après le début du match : les pronostics des joueurs deviennent visibles à tous.</span>
-              <span>Exceptionnellement, les bonus restent ouverts temporairement à cause du problème technique de lancement.</span>
-              <span>Les bonus des autres joueurs deviennent visibles uniquement au début du championnat.</span>
-
-              <strong>Vainqueur de journée</strong>
-              <span>Le vainqueur de journée peut changer la photo du groupe.</span>
-              <span>En cas d'égalité entre deux ou plusieurs joueurs, le départage se fait dans cet ordre : scores exacts, bons résultats, bons écarts de buts.</span>
-              <span>Si aucun départage n'est possible, aucun vainqueur de journée n'est désigné.</span>
-
-              <strong>Départage fin de championnat</strong>
-              <span>En cas d'égalité au classement final, le départage se fait dans cet ordre : nombre de scores exacts, nombre de bons résultats, nombre de vainqueurs de journée.</span>
-
-              <strong>Installation sur Android</strong>
-              <span>Ouvrir le lien dans Chrome ou Google.</span>
-              <span>Appuyer sur les trois points.</span>
-              <span>Choisir Ajouter à l'écran d'accueil ou Installer l'application.</span>
-
-              <strong>Installation sur iPhone</strong>
-              <span>Ouvrir le lien dans Safari.</span>
-              <span>Appuyer sur le bouton partager.</span>
-              <span>Choisir Sur l'écran d'accueil.</span>
-              <span>Valider Ajouter.</span>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-
-    <template id="matchTemplate">
-      <article class="match-card">
-        <div class="match-head">
-          <div>
-            <p class="match-date"></p>
-            <h4></h4>
-          </div>
-          <button class="icon-button remove-match" type="button" title="Supprimer le match">×</button>
+          </section>
         </div>
-        <div class="result-row">
-          <span>Résultat officiel</span>
-          <strong class="official-score">En attente</strong>
-        </div>
-        <div class="prediction-list"></div>
-      </article>
-    </template>
 
-    <script src="client.js?v=20260823-bonus-no-points"></script>
+        <div class="admin-actions">
+          <button class="primary-button" id="saveAdminBtn" type="button">Enregistrer</button>
+          <button class="ghost-button" id="resetAdminBtn" type="button">Remettre à zéro</button>
+        </div>
+        <p class="status" id="adminStatus">Les changements restent sauvegardés dans ce navigateur.</p>
+      </section>
+    </main>
+
+    <script src="client.js?v=20260823-construction-admin"></script>
   </body>
 </html>
