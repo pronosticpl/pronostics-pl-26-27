@@ -12,6 +12,89 @@
   --shadow: 0 16px 45px rgba(23, 32, 27, 0.13);
 }
 
+/* Bonus-only view */
+.app-shell .topbar,
+.app-shell .hero,
+.app-shell .mobile-tabs,
+.app-shell .dashboard > aside,
+.app-shell .bonus-section,
+.app-shell .rules-section,
+.main-panel > .panel-header,
+.main-panel .sync-box,
+.main-panel .admin-maintenance,
+.main-panel .match-form,
+.main-panel .filter-row {
+  display: none !important;
+}
+
+.app-shell main {
+  padding: 16px;
+}
+
+.dashboard {
+  display: block;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.main-panel {
+  display: block !important;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.match-list {
+  margin-top: 0;
+}
+
+.registered-bonus-table-wrap {
+  padding: 0;
+}
+
+.registered-bonus-intro {
+  margin: 0 0 12px;
+}
+
+.registered-bonus-intro strong {
+  font-size: clamp(1.25rem, 3vw, 2rem);
+}
+
+.registered-bonus-table {
+  min-width: 0;
+  background: #fffaf1;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  .app-shell main {
+    padding: 8px;
+  }
+
+  .registered-bonus-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .registered-bonus-table {
+    font-size: 0.78rem;
+  }
+
+  .registered-bonus-table th,
+  .registered-bonus-table td {
+    padding: 0.5rem 0.42rem;
+  }
+
+  .registered-bonus-table th:nth-child(4),
+  .registered-bonus-table td:nth-child(4) {
+    width: 42px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1374,5 +1457,87 @@ form button {
   .prediction-points {
     width: 100%;
     text-align: left;
+  }
+}
+
+/* Final override: show only the registered bonus table */
+.app-shell .topbar,
+.app-shell .hero,
+.app-shell .mobile-tabs,
+.app-shell .dashboard > aside,
+.app-shell .bonus-section,
+.app-shell .rules-section,
+.main-panel > .panel-header,
+.main-panel .sync-box,
+.main-panel .admin-maintenance,
+.main-panel .match-form,
+.main-panel .filter-row {
+  display: none !important;
+}
+
+.app-shell main {
+  padding: 16px !important;
+}
+
+.dashboard {
+  display: block !important;
+  max-width: 1120px !important;
+  margin: 0 auto !important;
+}
+
+.main-panel {
+  display: block !important;
+  width: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.match-list {
+  margin-top: 0 !important;
+}
+
+.registered-bonus-table-wrap {
+  padding: 0 !important;
+}
+
+.registered-bonus-intro {
+  margin: 0 0 12px !important;
+}
+
+.registered-bonus-intro strong {
+  font-size: clamp(1.25rem, 3vw, 2rem) !important;
+}
+
+.registered-bonus-table {
+  min-width: 0 !important;
+  background: #fffaf1 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.registered-bonus-table td:last-child {
+  color: var(--amber) !important;
+}
+
+@media (max-width: 700px) {
+  .app-shell main {
+    padding: 8px !important;
+  }
+
+  .registered-bonus-intro {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .registered-bonus-table {
+    font-size: 0.78rem !important;
+  }
+
+  .registered-bonus-table th,
+  .registered-bonus-table td {
+    padding: 0.5rem 0.42rem !important;
   }
 }
