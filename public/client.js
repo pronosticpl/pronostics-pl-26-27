@@ -1,13 +1,13 @@
 const storageKey = "novaprono-construction-admin-v1";
 
 const bonusRows = [
-  ["Draki", "Champion", "Liverpool"],
+  ["Draki", "Champion", "Arsenal"],
   ["Draki", "Meilleur buteur", "Erling Haaland"],
-  ["Draki", "Meilleur gardien", "Alisson"],
-  ["Draki", "Meilleur joueur", "Cole Palmer"],
+  ["Draki", "Meilleur gardien", "Raya"],
+  ["Draki", "Meilleur joueur", "Saka"],
   ["Draki", "Meilleur passeur", "Bruno Fernandes"],
   ["Draki", "Meilleure attaque", "Manchester City"],
-  ["Draki", "Meilleure défense", "Chelsea"],
+  ["Draki", "Meilleure défense", "Arsenal"],
   ["Gonçalo", "Champion", "Arsenal"],
   ["Gonçalo", "Meilleur buteur", "Erling Haaland"],
   ["Gonçalo", "Meilleur gardien", "David Raya"],
