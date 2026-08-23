@@ -215,14 +215,13 @@ function renderBonusTable() {
     const previousPlayer = bonusRows[index - 1]?.[0];
     const official = state.official[category] || "";
     const points = pointsForBonusChoice(category, choice, official);
-    const note = bonusNote(category, choice, official);
     const row = document.createElement("tr");
     if (player !== previousPlayer) row.classList.add("player-start");
     row.innerHTML = `
       <td>${escapeHtml(player)}</td>
       <td>${escapeHtml(category)}</td>
       <td>${escapeHtml(choice)}</td>
-      <td>${official ? `${escapeHtml(official)} <span class="note-pill ${note.className}">${note.label}</span>` : '<span class="muted">- En attente</span>'}</td>
+      <td>${official ? escapeHtml(official) : '<span class="muted">-</span>'}</td>
       <td><strong>${points}</strong></td>
     `;
     els.bonusBody.append(row);
@@ -326,16 +325,6 @@ function bonusPointsFor(player) {
 function pointsForBonusChoice(category, choice, official) {
   if (!same(choice, official, category)) return 0;
   return bonusPointValues[category] || 0;
-}
-
-function bonusNote(category, choice, official) {
-  if (!String(official || "").trim()) {
-    return { label: "En attente", className: "is-pending" };
-  }
-  if (same(choice, official, category)) {
-    return { label: "Exact", className: "is-exact" };
-  }
-  return { label: "Faux", className: "is-wrong" };
 }
 
 function same(a, b, category) {

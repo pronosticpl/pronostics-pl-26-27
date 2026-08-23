@@ -254,32 +254,6 @@ tbody tr:nth-child(odd) {
   font-weight: 800;
 }
 
-.note-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 3px 8px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.note-pill.is-exact {
-  background: #e0efe4;
-  color: var(--green-dark);
-}
-
-.note-pill.is-wrong {
-  background: #fae2dc;
-  color: var(--red);
-}
-
-.note-pill.is-pending {
-  background: #f0eadc;
-  color: var(--muted);
-}
-
 .rank {
   display: inline-grid;
   min-width: 28px;
