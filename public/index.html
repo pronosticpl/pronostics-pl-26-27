@@ -6,21 +6,17 @@
     <title>Pronostics PL 26 -27</title>
     <meta http-equiv="Cache-Control" content="no-store" />
     <meta name="theme-color" content="#1f6b43" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260823-construction-admin" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260823-construction-admin" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260823-construction-admin" />
-    <link rel="stylesheet" href="styles.css?v=20260823-construction-admin" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260823-participants-admin" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260823-participants-admin" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260823-participants-admin" />
+    <link rel="stylesheet" href="styles.css?v=20260823-participants-admin" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
       <form class="access-card" id="accessForm">
         <span class="brand-mark">PL</span>
-        <h1>En construction</h1>
-        <p>Le site est temporairement accessible uniquement à l’admin Norbert.</p>
-        <label>
-          Admin
-          <input id="adminName" type="text" autocomplete="username" placeholder="Norbert" />
-        </label>
+        <h1>Pronostics PL 26 -27</h1>
+        <p>Entre le mot de passe du groupe pour consulter le site.</p>
         <label>
           Mot de passe
           <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" />
@@ -34,8 +30,8 @@
       <section class="construction-card">
         <span class="brand-mark">PL</span>
         <div>
-          <h1>En construction</h1>
-          <p>Le site Pronostics PL 26 -27 est temporairement inaccessible pendant la mise à jour.</p>
+          <h1>Pronostics PL 26 -27</h1>
+          <p>Consultation des bonus, du classement et des règles.</p>
         </div>
         <div class="header-stats">
           <span>Leader : <strong id="leaderName">-</strong></span>
@@ -158,6 +154,17 @@
           <span>Champs à remplir</span>
         </div>
 
+        <form class="admin-lock" id="adminUnlockForm">
+          <h3>Accès admin</h3>
+          <label>
+            Mot de passe admin
+            <input id="adminUnlockPassword" type="password" autocomplete="current-password" placeholder="Mot de passe admin" />
+          </label>
+          <button class="primary-button" type="submit">Ouvrir admin</button>
+          <p class="access-error" id="adminUnlockError" hidden>Mot de passe admin incorrect.</p>
+        </form>
+
+        <div id="adminContent" hidden>
         <div class="admin-grid">
           <section class="admin-block">
             <h3>Journée</h3>
@@ -220,9 +227,10 @@
           <button class="ghost-button" id="resetAdminBtn" type="button">Remettre à zéro</button>
         </div>
         <p class="status" id="adminStatus">Les changements seront sauvegardés dans Supabase.</p>
+        </div>
       </section>
     </main>
 
-    <script src="client.js?v=20260823-day-wins"></script>
+    <script src="client.js?v=20260823-participants-admin"></script>
   </body>
 </html>

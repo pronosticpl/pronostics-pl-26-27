@@ -1,8 +1,9 @@
 const storageKey = "novaprono-construction-admin-v1";
 const remoteStateKey = "bonusAdmin";
-const accessKey = "novaprono-admin-access-v1";
-const adminName = "norbert";
-const adminPassword = "1234";
+const accessKey = "novaprono-participant-access-v1";
+const adminAccessKey = "novaprono-admin-unlocked-v1";
+const sitePassword = "YNWA";
+const adminPassword = "LFC2026";
 
 const bonusRows = [
   ["Draki", "Champion", "Arsenal"],
@@ -105,7 +106,6 @@ let state = loadState();
 const els = {
   accessGate: document.querySelector("#accessGate"),
   accessForm: document.querySelector("#accessForm"),
-  accessName: document.querySelector("#adminName"),
   accessPassword: document.querySelector("#adminPassword"),
   accessError: document.querySelector("#accessError"),
   appShell: document.querySelector("#appShell"),
@@ -124,12 +124,17 @@ const els = {
   roundHistoryBody: document.querySelector("#roundHistoryBody"),
   roundInput: document.querySelector("#roundInput"),
   roundStatus: document.querySelector("#roundStatus"),
+  adminUnlockForm: document.querySelector("#adminUnlockForm"),
+  adminUnlockPassword: document.querySelector("#adminUnlockPassword"),
+  adminUnlockError: document.querySelector("#adminUnlockError"),
+  adminContent: document.querySelector("#adminContent"),
   saveAdminBtn: document.querySelector("#saveAdminBtn"),
   resetAdminBtn: document.querySelector("#resetAdminBtn"),
   adminStatus: document.querySelector("#adminStatus"),
 };
 
 els.accessForm.addEventListener("submit", handleAccessSubmit);
+els.adminUnlockForm.addEventListener("submit", handleAdminUnlockSubmit);
 els.logoutBtn.addEventListener("click", lockSite);
 els.tabs.forEach((tab) => {
   tab.addEventListener("click", () => setTab(tab.dataset.tab));
@@ -216,6 +221,7 @@ function render() {
   renderEvolution();
   renderDayWins();
   renderAdmin();
+  renderAdminAccess();
 }
 
 function renderHeader() {
@@ -227,10 +233,9 @@ function renderHeader() {
 
 function handleAccessSubmit(event) {
   event.preventDefault();
-  const nameOk = normalize(els.accessName.value) === adminName;
-  const passwordOk = els.accessPassword.value === adminPassword;
+  const passwordOk = els.accessPassword.value === sitePassword;
 
-  if (!nameOk || !passwordOk) {
+  if (!passwordOk) {
     els.accessError.hidden = false;
     els.accessPassword.value = "";
     els.accessPassword.focus();
@@ -251,16 +256,38 @@ function unlockSite() {
 
 function lockSite() {
   sessionStorage.removeItem(accessKey);
+  sessionStorage.removeItem(adminAccessKey);
   els.accessGate.hidden = false;
   els.appShell.hidden = true;
   els.accessPassword.value = "";
-  els.accessName.value = "";
-  els.accessName.focus();
+  els.accessPassword.focus();
 }
 
 function setTab(name) {
   els.tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.tab === name));
   els.panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === name));
+  if (name === "admin") renderAdminAccess();
+}
+
+function handleAdminUnlockSubmit(event) {
+  event.preventDefault();
+  if (els.adminUnlockPassword.value !== adminPassword) {
+    els.adminUnlockError.hidden = false;
+    els.adminUnlockPassword.value = "";
+    els.adminUnlockPassword.focus();
+    return;
+  }
+
+  sessionStorage.setItem(adminAccessKey, "ok");
+  els.adminUnlockPassword.value = "";
+  els.adminUnlockError.hidden = true;
+  renderAdminAccess();
+}
+
+function renderAdminAccess() {
+  const unlocked = sessionStorage.getItem(adminAccessKey) === "ok";
+  els.adminUnlockForm.hidden = unlocked;
+  els.adminContent.hidden = !unlocked;
 }
 
 function renderBonusTable() {
