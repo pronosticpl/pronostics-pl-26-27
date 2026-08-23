@@ -110,6 +110,26 @@ input {
   font-weight: 900;
 }
 
+.header-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.header-stats span {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #f8ead0;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.header-stats strong {
+  color: white;
+}
+
 .brand-mark {
   display: inline-grid;
   flex: 0 0 auto;
@@ -491,9 +511,21 @@ input {
   }
 
   .logout-button {
+    margin-left: 0;
     min-height: 32px;
     padding: 0 8px;
     font-size: 0.72rem;
+  }
+
+  .header-stats {
+    width: 100%;
+    margin-left: 42px;
+    gap: 4px;
+  }
+
+  .header-stats span {
+    padding: 5px 6px;
+    font-size: 0.66rem;
   }
 
   .tabs {

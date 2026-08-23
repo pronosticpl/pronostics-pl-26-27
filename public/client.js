@@ -109,6 +109,8 @@ const els = {
   accessError: document.querySelector("#accessError"),
   appShell: document.querySelector("#appShell"),
   logoutBtn: document.querySelector("#logoutBtn"),
+  leaderName: document.querySelector("#leaderName"),
+  dayWinnerName: document.querySelector("#dayWinnerName"),
   tabs: document.querySelectorAll("[data-tab]"),
   panels: document.querySelectorAll("[data-panel]"),
   bonusBody: document.querySelector("#bonusBody"),
@@ -202,10 +204,18 @@ async function saveToRemote() {
 }
 
 function render() {
+  renderHeader();
   renderBonusTable();
   renderRanking();
   renderEvolution();
   renderAdmin();
+}
+
+function renderHeader() {
+  const leader = currentRankingRows()[0];
+  const dayWinner = latestDayWinner();
+  els.leaderName.textContent = leader ? `${leader.player} (${leader.total} pts)` : "-";
+  els.dayWinnerName.textContent = dayWinner || "-";
 }
 
 function handleAccessSubmit(event) {
@@ -410,8 +420,10 @@ function currentRankingRows() {
 function recordRoundSnapshot() {
   const round = numberOrZero(state.currentRound);
   if (!round) return;
-  const totals = Object.fromEntries(currentRankingRows().map((row) => [row.player, row.total]));
-  const nextEntry = { round, totals, savedAt: new Date().toISOString() };
+  const rows = currentRankingRows();
+  const totals = Object.fromEntries(rows.map((row) => [row.player, row.total]));
+  const pronostics = Object.fromEntries(rows.map((row) => [row.player, row.pronostics]));
+  const nextEntry = { round, totals, pronostics, savedAt: new Date().toISOString() };
   state.history = [
     ...normalizeHistory(state.history).filter((entry) => entry.round !== round),
     nextEntry,
@@ -427,10 +439,29 @@ function normalizeHistory(history) {
         totals[player] = numberOrZero(entry?.totals?.[player]);
         return totals;
       }, {}),
+      pronostics: players.reduce((pronostics, player) => {
+        pronostics[player] = numberOrZero(entry?.pronostics?.[player]);
+        return pronostics;
+      }, {}),
       savedAt: typeof entry?.savedAt === "string" ? entry.savedAt : "",
     }))
     .filter((entry) => entry.round > 0)
     .sort((a, b) => a.round - b.round);
+}
+
+function latestDayWinner() {
+  const orderedHistory = normalizeHistory(state.history);
+  if (!orderedHistory.length) return "";
+  const latest = orderedHistory.at(-1);
+  const previous = orderedHistory.length > 1 ? orderedHistory.at(-2) : null;
+  const scores = players.map((player) => ({
+    player,
+    points: numberOrZero(latest.pronostics?.[player]) - numberOrZero(previous?.pronostics?.[player]),
+  }));
+  const best = Math.max(0, ...scores.map((score) => score.points));
+  if (!best) return "";
+  const winners = scores.filter((score) => score.points === best).map((score) => score.player);
+  return `J${latest.round}: ${winners.join(" / ")} (${best} pts)`;
 }
 
 function officialMatchesFor(player) {
