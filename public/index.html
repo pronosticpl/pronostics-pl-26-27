@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Pronostics PL" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260822-bonusmain" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260822-bonusmain" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260822-bonusmain" />
-    <link rel="stylesheet" href="styles.css?v=20260822-bonusmain" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260823-bonus-table" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260823-bonus-table" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260823-bonus-table" />
+    <link rel="stylesheet" href="styles.css?v=20260823-bonus-table" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
@@ -64,7 +64,7 @@
 
         <nav class="mobile-tabs" aria-label="Navigation mobile">
           <button class="mobile-tab" type="button" data-mobile-tab="login">Connexion</button>
-          <button class="mobile-tab is-active" type="button" data-mobile-tab="matches">Pronostics</button>
+          <button class="mobile-tab is-active" type="button" data-mobile-tab="matches">Bonus</button>
           <button class="mobile-tab" type="button" data-mobile-tab="standing">Classement</button>
           <button class="mobile-tab" type="button" data-mobile-tab="bonus">Bonus</button>
           <button class="mobile-tab" type="button" data-mobile-tab="rules">Règlement</button>
@@ -105,24 +105,24 @@
 
           <section class="panel main-panel" data-mobile-panel="matches">
             <div class="panel-header">
-              <h3>Pronostics</h3>
+              <h3>Pronostics bonus</h3>
               <div class="compact-actions">
                 <button class="subtle-button admin-only" id="syncBtn" type="button">Mettre à jour</button>
               </div>
             </div>
 
-            <div class="sync-box admin-only">
+            <div class="sync-box admin-only" hidden>
               <input id="apiKey" type="password" placeholder="Clé football-data.org pour importer PL 26-27" />
               <button class="ghost-button" id="saveKeyBtn" type="button">Garder la clé</button>
               <button class="ghost-button" id="importLeagueBtn" type="button">Importer PL</button>
               <p id="syncStatus">Importe les vrais matchs Premier League 2026-2027 avec ta clé API.</p>
             </div>
 
-            <div class="admin-maintenance admin-only">
+            <div class="admin-maintenance admin-only" hidden>
               <button class="danger-button wide-button" type="button" data-clear-official-bonus>Effacer bonus officiels</button>
             </div>
 
-            <form class="match-form admin-only" id="matchForm">
+            <form class="match-form admin-only" id="matchForm" hidden>
               <input id="teamA" type="text" placeholder="Équipe domicile" autocomplete="off" required />
               <input id="teamB" type="text" placeholder="Équipe extérieur" autocomplete="off" required />
               <input id="matchDate" type="datetime-local" />
@@ -130,7 +130,7 @@
               <button type="submit">Ajouter</button>
             </form>
 
-            <div class="filter-row">
+            <div class="filter-row" hidden>
               <label>
                 Journée
                 <select id="matchdayFilter"></select>
@@ -204,7 +204,7 @@
               <span>Même l'admin Norbert ne les voit pas avant le début.</span>
               <span>Dès que l'heure du match est passée : le pronostic est bloqué.</span>
               <span>Après le début du match : les pronostics des joueurs deviennent visibles à tous.</span>
-              <span>Les bonus sont bloqués dès le début du premier match de championnat.</span>
+              <span>Exceptionnellement, les bonus restent ouverts temporairement à cause du problème technique de lancement.</span>
               <span>Les bonus des autres joueurs deviennent visibles uniquement au début du championnat.</span>
 
               <strong>Vainqueur de journée</strong>
@@ -248,9 +248,6 @@
       </article>
     </template>
 
-    <script src="client.js?v=20260822-bonusmain"></script>
+    <script src="client.js?v=20260823-bonus-table"></script>
   </body>
 </html>
-
-
-

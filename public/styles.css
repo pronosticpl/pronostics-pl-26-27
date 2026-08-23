@@ -965,6 +965,64 @@ form button {
   margin-top: 16px;
 }
 
+.registered-bonus-table-wrap {
+  overflow-x: auto;
+}
+
+.registered-bonus-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  color: var(--green);
+}
+
+.registered-bonus-intro span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.registered-bonus-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.registered-bonus-table th,
+.registered-bonus-table td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.registered-bonus-table th {
+  position: sticky;
+  top: 0;
+  background: var(--green);
+  color: white;
+  font-weight: 900;
+}
+
+.registered-bonus-table td:first-child {
+  color: var(--green);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.registered-bonus-table td:last-child {
+  color: var(--gold);
+  font-weight: 900;
+  text-align: right;
+}
+
+.registered-bonus-table .player-start td {
+  border-top: 3px solid var(--line);
+}
+
 .empty-state {
   margin: 0;
   padding: 18px;

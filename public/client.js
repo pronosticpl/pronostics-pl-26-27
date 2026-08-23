@@ -17,6 +17,65 @@ const seasonBonusCategories = [
   { id: "goldenGloves", label: "Meilleur gardien", points: 3 },
   { id: "bestPlayer", label: "Meilleur joueur", points: 3 },
 ];
+const seasonBonusPredictionsOpen = true;
+const registeredSeasonBonusRows = [
+  ["Draki", "Champion", "Liverpool", 10],
+  ["Draki", "Meilleur buteur", "Erling Haaland", 3],
+  ["Draki", "Meilleur gardien", "Alisson", 3],
+  ["Draki", "Meilleur joueur", "Cole Palmer", 3],
+  ["Draki", "Meilleur passeur", "Bruno Fernandes", 3],
+  ["Draki", "Meilleure attaque", "Manchester City", 5],
+  ["Draki", "Meilleure défense", "Chelsea", 5],
+  ["Gonçalo", "Champion", "Arsenal", 10],
+  ["Gonçalo", "Meilleur buteur", "Erling Haaland", 3],
+  ["Gonçalo", "Meilleur gardien", "David Raya", 3],
+  ["Gonçalo", "Meilleur joueur", "Martin Ødegaard", 3],
+  ["Gonçalo", "Meilleur passeur", "Bruno Fernandes", 3],
+  ["Gonçalo", "Meilleure attaque", "Manchester City", 5],
+  ["Gonçalo", "Meilleure défense", "Arsenal", 5],
+  ["Guillaume", "Champion", "Arsenal", 10],
+  ["Guillaume", "Meilleur buteur", "Erling Haaland", 3],
+  ["Guillaume", "Meilleur gardien", "David Raya", 3],
+  ["Guillaume", "Meilleur joueur", "Martin Ødegaard", 3],
+  ["Guillaume", "Meilleur passeur", "Martin Ødegaard", 3],
+  ["Guillaume", "Meilleure attaque", "Arsenal", 5],
+  ["Guillaume", "Meilleure défense", "Liverpool", 5],
+  ["Jojo", "Champion", "Arsenal", 10],
+  ["Jojo", "Meilleur buteur", "Bryan Mbeumo", 3],
+  ["Jojo", "Meilleur gardien", "Senne Lammens", 3],
+  ["Jojo", "Meilleur joueur", "Bryan Mbeumo", 3],
+  ["Jojo", "Meilleur passeur", "Bruno Fernandes", 3],
+  ["Jojo", "Meilleure attaque", "Manchester United", 5],
+  ["Jojo", "Meilleure défense", "Arsenal", 5],
+  ["MaxouCod", "Champion", "Liverpool", 10],
+  ["MaxouCod", "Meilleur buteur", "Erling Haaland", 3],
+  ["MaxouCod", "Meilleur gardien", "Alisson", 3],
+  ["MaxouCod", "Meilleur joueur", "Cole Palmer", 3],
+  ["MaxouCod", "Meilleur passeur", "Bruno Fernandes", 3],
+  ["MaxouCod", "Meilleure attaque", "Manchester City", 5],
+  ["MaxouCod", "Meilleure défense", "Chelsea", 5],
+  ["Ulysse", "Champion", "Arsenal", 10],
+  ["Ulysse", "Meilleur buteur", "Haaland", 3],
+  ["Ulysse", "Meilleur gardien", "David Raya", 3],
+  ["Ulysse", "Meilleur joueur", "Wirtz", 3],
+  ["Ulysse", "Meilleur passeur", "Wirtz", 3],
+  ["Ulysse", "Meilleure attaque", "Liverpool", 5],
+  ["Ulysse", "Meilleure défense", "Arsenal", 5],
+  ["YNWA", "Champion", "Liverpool", 10],
+  ["YNWA", "Meilleur buteur", "Alexander Isak", 3],
+  ["YNWA", "Meilleur gardien", "Alisson Becker", 3],
+  ["YNWA", "Meilleur joueur", "Szoboszlai", 3],
+  ["YNWA", "Meilleur passeur", "Wirtz", 3],
+  ["YNWA", "Meilleure attaque", "Liverpool", 5],
+  ["YNWA", "Meilleure défense", "Liverpool", 5],
+  ["Zito", "Champion", "Arsenal", 10],
+  ["Zito", "Meilleur buteur", "Erling Haaland", 3],
+  ["Zito", "Meilleur gardien", "David Raya", 3],
+  ["Zito", "Meilleur joueur", "Erling Haaland", 3],
+  ["Zito", "Meilleur passeur", "Rayan Cherki", 3],
+  ["Zito", "Meilleure attaque", "Manchester City", 5],
+  ["Zito", "Meilleure défense", "Arsenal", 5],
+];
 const individualBonusIds = new Set(["topScorer", "bestAssister", "goldenGloves", "bestPlayer"]);
 const builtInPlayersRaw = {
   "Arsenal": [
@@ -1155,7 +1214,7 @@ els.seasonBonusList.addEventListener("change", (event) => {
     if (!isAdmin()) return;
     state.seasonBonus.official[input.dataset.bonusId] = value;
   } else {
-    if (isSeasonLocked() && !state.testMode) {
+    if (!seasonBonusPredictionsOpen && isSeasonLocked() && !state.testMode) {
       alert("Les bonus saison sont verrouillés après le début du championnat.");
       render();
       return;
@@ -1521,7 +1580,7 @@ function renderSession() {
 function renderSeasonBonus() {
   const user = currentUser();
   const locked = isSeasonLocked();
-  const predictionLocked = locked;
+  const predictionLocked = locked && !seasonBonusPredictionsOpen;
   els.seasonBonusList.innerHTML = "";
   els.seasonBonusTotal.textContent = user ? `${seasonBonusPointsFor(user.id)} pts` : "0";
 
@@ -1533,7 +1592,7 @@ function renderSeasonBonus() {
   const userBonus = state.seasonBonus.predictions[user.id] ?? {};
   seasonBonusCategories.forEach((category) => {
     const row = document.createElement("div");
-    row.className = `bonus-row${locked ? " is-locked" : ""}`;
+    row.className = `bonus-row${predictionLocked ? " is-locked" : ""}`;
     row.innerHTML = `
       <div>
         <strong>${category.label}</strong>
@@ -1553,7 +1612,7 @@ function renderSeasonBonus() {
     setBonusControlsValue(row, category, "prediction", userBonus[category.id] ?? "");
     row.querySelectorAll('[data-role="prediction"]').forEach((input) => {
       input.disabled = predictionLocked;
-      input.title = predictionLocked ? "Bonus verrouillé après le début du championnat" : "";
+      input.title = predictionLocked ? "Bonus verrouillé après le début du championnat" : "Bonus temporairement ouverts";
     });
     const officialLabel = row.querySelector(".admin-only");
     const showOfficial = isAdmin() || locked;
@@ -1800,27 +1859,54 @@ function renderMatchdayFilter() {
 }
 
 function renderMatches() {
-  els.matchCount.textContent = state.matches.length;
+  els.matchCount.textContent = registeredSeasonBonusRows.length;
   els.matchList.innerHTML = "";
-  const matches = filteredMatches();
+  els.matchList.append(renderRegisteredSeasonBonusTable());
+}
 
-  if (matches.length === 0) {
-    els.matchList.innerHTML = '<p class="empty-state">Aucun vrai match importé. Mets ta clé API puis clique sur Importer PL.</p>';
-    return;
-  }
+function renderRegisteredSeasonBonusTable() {
+  const wrapper = document.createElement("div");
+  wrapper.className = "registered-bonus-table-wrap";
+  const grouped = registeredSeasonBonusRows.reduce((acc, [player, category, choice, points]) => {
+    if (!acc[player]) acc[player] = [];
+    acc[player].push({ category, choice, points });
+    return acc;
+  }, {});
+  const playerCount = Object.keys(grouped).length;
 
-  matches.forEach((match) => {
-    const node = els.matchTemplate.content.firstElementChild.cloneNode(true);
-    node.querySelector("h4").textContent = `${match.teamA} - ${match.teamB}`;
-    node.querySelector(".match-date").textContent = matchMeta(match);
-    node.querySelector(".official-score").textContent = officialScoreLabel(match);
+  wrapper.innerHTML = `
+    <div class="registered-bonus-intro">
+      <strong>Pronostics bonus enregistrés</strong>
+      <span>${playerCount} joueurs · ${registeredSeasonBonusRows.length} choix bonus</span>
+    </div>
+    <table class="registered-bonus-table">
+      <thead>
+        <tr>
+          <th>Joueur</th>
+          <th>Bonus</th>
+          <th>Choix</th>
+          <th>Pts</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  `;
 
-    const removeButton = node.querySelector(".remove-match");
-    removeButton.hidden = !isAdmin();
-    removeButton.addEventListener("click", () => removeMatch(match.id));
-    renderPredictions(node.querySelector(".prediction-list"), match);
-    els.matchList.append(node);
+  const body = wrapper.querySelector("tbody");
+  registeredSeasonBonusRows.forEach(([player, category, choice, points], index, rows) => {
+    const previousPlayer = rows[index - 1]?.[0];
+    const row = document.createElement("tr");
+    if (player !== previousPlayer) row.classList.add("player-start");
+    row.innerHTML = `
+      <td>${escapeHtml(player)}</td>
+      <td>${escapeHtml(category)}</td>
+      <td>${escapeHtml(choice)}</td>
+      <td>${points}</td>
+    `;
+    body.append(row);
   });
+
+  return wrapper;
 }
 
 function renderPredictions(container, match) {
