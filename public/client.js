@@ -69,6 +69,23 @@ const categories = [
   "Meilleure défense",
 ];
 
+const bonusPointValues = {
+  Champion: 10,
+  "Meilleur buteur": 3,
+  "Meilleur gardien": 3,
+  "Meilleur joueur": 3,
+  "Meilleur passeur": 3,
+  "Meilleure attaque": 5,
+  "Meilleure défense": 5,
+};
+
+const playerCategories = new Set([
+  "Meilleur buteur",
+  "Meilleur gardien",
+  "Meilleur joueur",
+  "Meilleur passeur",
+]);
+
 const players = [...new Set(bonusRows.map(([player]) => player))].sort((a, b) => a.localeCompare(b, "fr"));
 
 const defaultState = {
@@ -121,7 +138,6 @@ function mergeState(saved) {
   players.forEach((player) => {
     const savedPoints = saved.points?.[player];
     if (!savedPoints || typeof savedPoints !== "object") return;
-    next.points[player].bonus = numberOrZero(savedPoints.bonus);
     next.points[player].pronostics = numberOrZero(savedPoints.pronostics);
   });
 
@@ -167,7 +183,7 @@ function renderRanking() {
       const points = state.points[player] || { bonus: 0, pronostics: 0 };
       return {
         player,
-        bonus: numberOrZero(points.bonus),
+        bonus: bonusPointsFor(player),
         pronostics: numberOrZero(points.pronostics),
         officialCount: officialMatchesFor(player),
       };
@@ -203,10 +219,11 @@ function renderAdmin() {
   els.adminPointsBody.innerHTML = "";
   players.forEach((player) => {
     const points = state.points[player] || { bonus: 0, pronostics: 0 };
+    const automaticBonus = bonusPointsFor(player);
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${escapeHtml(player)}</td>
-      <td><input type="number" min="0" step="1" data-points="bonus" data-player="${escapeHtml(player)}" value="${points.bonus}" /></td>
+      <td><strong>${automaticBonus}</strong></td>
       <td><input type="number" min="0" step="1" data-points="pronostics" data-player="${escapeHtml(player)}" value="${points.pronostics}" /></td>
     `;
     els.adminPointsBody.append(row);
@@ -218,11 +235,10 @@ function saveAdminValues() {
     state.official[input.dataset.official] = input.value.trim();
   });
 
-  document.querySelectorAll("[data-points]").forEach((input) => {
+  document.querySelectorAll("[data-points='pronostics']").forEach((input) => {
     const player = input.dataset.player;
-    const kind = input.dataset.points;
     if (!state.points[player]) state.points[player] = { bonus: 0, pronostics: 0 };
-    state.points[player][kind] = numberOrZero(input.value);
+    state.points[player].pronostics = numberOrZero(input.value);
   });
 
   persist();
@@ -244,12 +260,35 @@ function resetAdminValues() {
 function officialMatchesFor(player) {
   return bonusRows
     .filter(([rowPlayer]) => rowPlayer === player)
-    .filter(([, category, choice]) => same(choice, state.official[category]))
+    .filter(([, category, choice]) => same(choice, state.official[category], category))
     .length;
 }
 
-function same(a, b) {
-  return normalize(a) === normalize(b);
+function bonusPointsFor(player) {
+  return bonusRows
+    .filter(([rowPlayer]) => rowPlayer === player)
+    .reduce((total, [, category, choice]) => {
+      if (!same(choice, state.official[category], category)) return total;
+      return total + (bonusPointValues[category] || 0);
+    }, 0);
+}
+
+function same(a, b, category) {
+  const left = comparableValue(a, category);
+  const right = comparableValue(b, category);
+  if (!left || !right) return false;
+  if (left === right) return true;
+
+  const shortest = left.length <= right.length ? left : right;
+  const longest = left.length > right.length ? left : right;
+  return shortest.length >= 4 && longest.includes(shortest);
+}
+
+function comparableValue(value, category) {
+  const normalized = normalize(value);
+  if (!playerCategories.has(category)) return normalized;
+  const parts = normalized.split(/\s+-\s+|\s+\/\s+|\s+,\s+/).filter(Boolean);
+  return parts.at(-1) || normalized;
 }
 
 function normalize(value) {
