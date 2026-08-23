@@ -43,6 +43,7 @@
       <nav class="tabs" aria-label="Navigation">
         <button class="tab is-active" type="button" data-tab="bonus">Pronostics bonus</button>
         <button class="tab" type="button" data-tab="classement">Classement</button>
+        <button class="tab" type="button" data-tab="regles">Règles</button>
         <button class="tab" type="button" data-tab="admin">Admin</button>
       </nav>
 
@@ -85,6 +86,47 @@
             <tbody id="rankingBody"></tbody>
           </table>
         </div>
+
+        <section class="evolution-section">
+          <div class="panel-header compact-header">
+            <h2>Évolution</h2>
+            <span>Selon les sauvegardes de Norbert après chaque journée</span>
+          </div>
+          <div class="chart-wrap" id="evolutionChart"></div>
+        </section>
+      </section>
+
+      <section class="panel" id="reglesPanel" data-panel="regles">
+        <div class="panel-header">
+          <h2>Règles bonus</h2>
+        </div>
+        <div class="rules-grid">
+          <article class="rule-card">
+            <h3>Barème bonus</h3>
+            <ul>
+              <li>Champion : 10 points</li>
+              <li>Meilleure attaque : 5 points</li>
+              <li>Meilleure défense : 5 points</li>
+              <li>Meilleur buteur : 3 points</li>
+              <li>Meilleur passeur : 3 points</li>
+              <li>Meilleur gardien : 3 points</li>
+              <li>Meilleur joueur : 3 points</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>Réponses officielles</h3>
+            <p>Norbert remplit les réponses officielles selon le classement actuel ou les informations officielles disponibles.</p>
+            <p>Les points bonus se calculent automatiquement dès qu’une réponse officielle correspond au choix d’un joueur.</p>
+          </article>
+          <article class="rule-card">
+            <h3>Correspondance des noms</h3>
+            <p>Pour les joueurs, le nom complet n’est pas obligatoire. Par exemple, Raya peut compter pour David Raya, et Haaland pour Erling Haaland.</p>
+          </article>
+          <article class="rule-card">
+            <h3>Évolution</h3>
+            <p>Quand une journée est terminée, Norbert indique le numéro de journée dans l’admin et enregistre. Le site garde alors une photo du classement pour le graphique.</p>
+          </article>
+        </div>
       </section>
 
       <section class="panel" id="adminPanel" data-panel="admin">
@@ -94,6 +136,15 @@
         </div>
 
         <div class="admin-grid">
+          <section class="admin-block">
+            <h3>Journée terminée</h3>
+            <label class="round-field">
+              Numéro de journée
+              <input id="roundInput" type="number" min="1" step="1" placeholder="Exemple : 1" />
+            </label>
+            <p class="hint">Si ce champ est rempli, l’enregistrement ajoute ou remplace cette journée dans le graphique.</p>
+          </section>
+
           <section class="admin-block">
             <h3>Bonus officiels</h3>
             <div class="official-form" id="officialForm"></div>

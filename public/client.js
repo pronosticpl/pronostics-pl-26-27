@@ -95,6 +95,8 @@ const players = [...new Set(bonusRows.map(([player]) => player))].sort((a, b) =>
 const defaultState = {
   official: Object.fromEntries(categories.map((category) => [category, ""])),
   points: Object.fromEntries(players.map((player) => [player, { bonus: 0, pronostics: 0 }])),
+  currentRound: "",
+  history: [],
 };
 
 let state = loadState();
@@ -112,8 +114,10 @@ const els = {
   bonusBody: document.querySelector("#bonusBody"),
   bonusCount: document.querySelector("#bonusCount"),
   rankingBody: document.querySelector("#rankingBody"),
+  evolutionChart: document.querySelector("#evolutionChart"),
   officialForm: document.querySelector("#officialForm"),
   adminPointsBody: document.querySelector("#adminPointsBody"),
+  roundInput: document.querySelector("#roundInput"),
   saveAdminBtn: document.querySelector("#saveAdminBtn"),
   resetAdminBtn: document.querySelector("#resetAdminBtn"),
   adminStatus: document.querySelector("#adminStatus"),
@@ -158,6 +162,9 @@ function mergeMiniState(saved) {
     next.points[player].pronostics = numberOrZero(savedPoints.pronostics);
   });
 
+  next.currentRound = saved.currentRound ? String(saved.currentRound) : "";
+  next.history = normalizeHistory(saved.history);
+
   return next;
 }
 
@@ -197,6 +204,7 @@ async function saveToRemote() {
 function render() {
   renderBonusTable();
   renderRanking();
+  renderEvolution();
   renderAdmin();
 }
 
@@ -261,17 +269,7 @@ function renderBonusTable() {
 
 function renderRanking() {
   els.rankingBody.innerHTML = "";
-  const rows = players
-    .map((player) => {
-      const points = state.points[player] || { bonus: 0, pronostics: 0 };
-      return {
-        player,
-        bonus: bonusPointsFor(player),
-        pronostics: numberOrZero(points.pronostics),
-      };
-    })
-    .map((row) => ({ ...row, total: row.bonus + row.pronostics }))
-    .sort((a, b) => b.total - a.total || b.bonus - a.bonus || a.player.localeCompare(b.player, "fr"));
+  const rows = currentRankingRows();
 
   rows.forEach((row, index) => {
     const tr = document.createElement("tr");
@@ -286,7 +284,53 @@ function renderRanking() {
   });
 }
 
+function renderEvolution() {
+  if (!state.history.length) {
+    els.evolutionChart.innerHTML = `<p class="empty-chart">Aucune journée enregistrée. Norbert doit enregistrer une journée terminée dans l’onglet Admin.</p>`;
+    return;
+  }
+
+  const orderedHistory = [...state.history].sort((a, b) => a.round - b.round);
+  const maxTotal = Math.max(1, ...orderedHistory.flatMap((entry) => players.map((player) => numberOrZero(entry.totals?.[player]))));
+  const width = Math.max(520, orderedHistory.length * 92);
+  const height = 280;
+  const padding = { left: 44, right: 16, top: 20, bottom: 34 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const xFor = (index) => padding.left + (orderedHistory.length === 1 ? plotWidth / 2 : (index / (orderedHistory.length - 1)) * plotWidth);
+  const yFor = (value) => padding.top + plotHeight - (numberOrZero(value) / maxTotal) * plotHeight;
+  const colors = ["#1f6b43", "#bd4d40", "#d99a2b", "#3d6fb6", "#7b4ab8", "#1f8a8a", "#8b5a2b", "#5f6b2f"];
+
+  const gridLines = [0, Math.ceil(maxTotal / 2), maxTotal].map((value) => {
+    const y = yFor(value);
+    return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" class="chart-grid" /><text x="8" y="${y + 4}" class="chart-label">${value}</text>`;
+  }).join("");
+  const dayLabels = orderedHistory.map((entry, index) => `<text x="${xFor(index)}" y="${height - 10}" class="chart-label chart-day">J${entry.round}</text>`).join("");
+  const playerLines = players.map((player, playerIndex) => {
+    const color = colors[playerIndex % colors.length];
+    const points = orderedHistory.map((entry, index) => `${xFor(index)},${yFor(entry.totals?.[player])}`).join(" ");
+    const dots = orderedHistory.map((entry, index) => {
+      const total = numberOrZero(entry.totals?.[player]);
+      return `<circle cx="${xFor(index)}" cy="${yFor(total)}" r="3" fill="${color}"><title>${escapeHtml(player)} J${entry.round}: ${total} pts</title></circle>`;
+    }).join("");
+    return `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="2.4" />${dots}`;
+  }).join("");
+  const legend = players.map((player, index) => `<span class="legend-item"><span style="background:${colors[index % colors.length]}"></span>${escapeHtml(player)}</span>`).join("");
+
+  els.evolutionChart.innerHTML = `
+    <div class="chart-scroller">
+      <svg class="evolution-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Évolution du classement par journée">
+        ${gridLines}
+        ${dayLabels}
+        ${playerLines}
+      </svg>
+    </div>
+    <div class="chart-legend">${legend}</div>
+  `;
+}
+
 function renderAdmin() {
+  els.roundInput.value = state.currentRound || "";
   els.officialForm.innerHTML = "";
   categories.forEach((category) => {
     const label = document.createElement("label");
@@ -321,6 +365,8 @@ async function saveAdminValues() {
     if (!state.points[player]) state.points[player] = { bonus: 0, pronostics: 0 };
     state.points[player].pronostics = numberOrZero(input.value);
   });
+  state.currentRound = els.roundInput.value.trim();
+  recordRoundSnapshot();
 
   render();
   els.adminStatus.textContent = "Sauvegarde Supabase...";
@@ -345,6 +391,46 @@ async function resetAdminValues() {
   } catch (error) {
     els.adminStatus.textContent = `Erreur synchro: ${error.message}`;
   }
+}
+
+function currentRankingRows() {
+  return players
+    .map((player) => {
+      const points = state.points[player] || { bonus: 0, pronostics: 0 };
+      return {
+        player,
+        bonus: bonusPointsFor(player),
+        pronostics: numberOrZero(points.pronostics),
+      };
+    })
+    .map((row) => ({ ...row, total: row.bonus + row.pronostics }))
+    .sort((a, b) => b.total - a.total || b.bonus - a.bonus || a.player.localeCompare(b.player, "fr"));
+}
+
+function recordRoundSnapshot() {
+  const round = numberOrZero(state.currentRound);
+  if (!round) return;
+  const totals = Object.fromEntries(currentRankingRows().map((row) => [row.player, row.total]));
+  const nextEntry = { round, totals, savedAt: new Date().toISOString() };
+  state.history = [
+    ...normalizeHistory(state.history).filter((entry) => entry.round !== round),
+    nextEntry,
+  ].sort((a, b) => a.round - b.round);
+}
+
+function normalizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .map((entry) => ({
+      round: numberOrZero(entry?.round),
+      totals: players.reduce((totals, player) => {
+        totals[player] = numberOrZero(entry?.totals?.[player]);
+        return totals;
+      }, {}),
+      savedAt: typeof entry?.savedAt === "string" ? entry.savedAt : "",
+    }))
+    .filter((entry) => entry.round > 0)
+    .sort((a, b) => a.round - b.round);
 }
 
 function officialMatchesFor(player) {
