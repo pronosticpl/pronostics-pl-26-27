@@ -286,7 +286,7 @@ function renderRanking() {
 
 function renderEvolution() {
   if (!state.history.length) {
-    els.evolutionChart.innerHTML = `<p class="empty-chart">Aucune journée enregistrée. Norbert doit enregistrer une journée terminée dans l’onglet Admin.</p>`;
+    els.evolutionChart.innerHTML = "";
     return;
   }
 
