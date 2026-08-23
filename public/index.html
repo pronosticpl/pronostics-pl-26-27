@@ -96,6 +96,20 @@
             <h2>Évolution</h2>
           </div>
           <div class="chart-wrap" id="evolutionChart"></div>
+          <div class="day-wins-block">
+            <h3>Journées gagnées</h3>
+            <div class="table-wrap">
+              <table class="day-wins-table">
+                <thead>
+                  <tr>
+                    <th>Joueur</th>
+                    <th>Journées gagnées</th>
+                  </tr>
+                </thead>
+                <tbody id="dayWinsBody"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
       </section>
 
@@ -121,9 +135,18 @@
             <ul>
               <li>Le vainqueur de journée est calculé uniquement avec les points pronostics de la journée.</li>
               <li>En cas d’égalité entre deux ou plusieurs joueurs, le mieux classé au classement général remporte la journée.</li>
-              <li>Une journée incomplète compte dans le classement, mais ne désigne pas encore de vainqueur de journée.</li>
-              <li>Une journée incomplète est validée comme complète uniquement quand tous ses matchs sont terminés.</li>
+              <li>Une journée est validée seulement quand tous les matchs de cette journée sont terminés.</li>
+              <li>Si une journée est incomplète, les points déjà obtenus comptent dans le classement, mais aucun vainqueur de journée n’est désigné.</li>
+              <li>Dès que la journée est complète, le vainqueur de journée est calculé automatiquement.</li>
               <li>Le vainqueur de journée peut changer la photo du groupe.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>Égalité finale</h3>
+            <ul>
+              <li>En cas d’égalité à la fin du championnat, le départage se fait avec les points pronostics.</li>
+              <li>Si l’égalité reste, le départage se fait avec les points bonus.</li>
+              <li>Si l’égalité reste encore, le départage se fait avec le nombre de journées gagnées.</li>
             </ul>
           </article>
         </div>
@@ -200,6 +223,6 @@
       </section>
     </main>
 
-    <script src="client.js?v=20260823-round-table"></script>
+    <script src="client.js?v=20260823-day-wins"></script>
   </body>
 </html>

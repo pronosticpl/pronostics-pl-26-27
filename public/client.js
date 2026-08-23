@@ -118,6 +118,7 @@ const els = {
   bonusCount: document.querySelector("#bonusCount"),
   rankingBody: document.querySelector("#rankingBody"),
   evolutionChart: document.querySelector("#evolutionChart"),
+  dayWinsBody: document.querySelector("#dayWinsBody"),
   officialForm: document.querySelector("#officialForm"),
   adminPointsBody: document.querySelector("#adminPointsBody"),
   roundHistoryBody: document.querySelector("#roundHistoryBody"),
@@ -213,6 +214,7 @@ function render() {
   renderBonusTable();
   renderRanking();
   renderEvolution();
+  renderDayWins();
   renderAdmin();
 }
 
@@ -342,6 +344,38 @@ function renderEvolution() {
     </div>
     <div class="chart-legend">${legend}</div>
   `;
+}
+
+function renderDayWins() {
+  const rows = dayWinRows();
+  if (!rows.length) {
+    els.dayWinsBody.innerHTML = `
+      <tr>
+        <td colspan="2" class="muted">Aucune journée complète enregistrée.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  els.dayWinsBody.innerHTML = rows.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.player)}</td>
+      <td><strong>${row.wins}</strong></td>
+    </tr>
+  `).join("");
+}
+
+function dayWinRows() {
+  const history = normalizeHistory(state.history);
+  const wins = Object.fromEntries(players.map((player) => [player, 0]));
+  history.forEach((entry, index) => {
+    const winner = dayWinnerPlayerForEntry(history, index);
+    if (winner) wins[winner] += 1;
+  });
+  return players
+    .map((player) => ({ player, wins: wins[player] || 0 }))
+    .filter((row) => row.wins > 0)
+    .sort((a, b) => b.wins - a.wins || a.player.localeCompare(b.player, "fr"));
 }
 
 function renderAdmin() {
@@ -516,6 +550,15 @@ function latestDayWinner() {
 }
 
 function dayWinnerForEntry(orderedHistory, latestIndex) {
+  const winner = dayWinnerPlayerForEntry(orderedHistory, latestIndex);
+  if (!winner) return "";
+  const latest = orderedHistory[latestIndex];
+  const previous = latestIndex > 0 ? orderedHistory[latestIndex - 1] : null;
+  const points = numberOrZero(latest.pronostics?.[winner]) - numberOrZero(previous?.pronostics?.[winner]);
+  return `${winner} (${points} pts)`;
+}
+
+function dayWinnerPlayerForEntry(orderedHistory, latestIndex) {
   const latest = orderedHistory[latestIndex];
   if (!latest?.complete) return "";
   const previous = latestIndex > 0 ? orderedHistory[latestIndex - 1] : null;
@@ -529,7 +572,7 @@ function dayWinnerForEntry(orderedHistory, latestIndex) {
   const winner = scores
     .filter((score) => score.points === best)
     .sort((a, b) => (rankingOrder.get(a.player) ?? 999) - (rankingOrder.get(b.player) ?? 999))[0];
-  return `${winner.player} (${best} pts)`;
+  return winner?.player || "";
 }
 
 function officialMatchesFor(player) {

@@ -429,6 +429,19 @@ select {
   border-top: 1px solid var(--line);
 }
 
+.day-wins-block {
+  margin-top: 14px;
+}
+
+.day-wins-block h3 {
+  margin-bottom: 8px;
+  color: var(--green-dark);
+}
+
+.day-wins-table {
+  min-width: 320px;
+}
+
 .legend-item {
   display: inline-flex;
   align-items: center;
