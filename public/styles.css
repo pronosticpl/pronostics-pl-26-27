@@ -35,6 +35,58 @@ input {
   padding: 18px 0 36px;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+.access-gate {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 18px;
+  background:
+    linear-gradient(rgba(18, 30, 24, 0.64), rgba(18, 30, 24, 0.64)),
+    linear-gradient(135deg, #1f6b43, #b73a36);
+}
+
+.access-card {
+  display: grid;
+  width: min(420px, 100%);
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.access-card .brand-mark {
+  background: var(--green);
+}
+
+.access-card h1 {
+  color: var(--green-dark);
+}
+
+.access-card p {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.access-card label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.access-error {
+  padding: 10px;
+  border-radius: 8px;
+  background: #fae2dc;
+  color: var(--red) !important;
+}
+
 .construction-card {
   display: flex;
   align-items: center;
@@ -45,6 +97,17 @@ input {
   background: linear-gradient(135deg, #1f6b43, #b73a36);
   color: white;
   box-shadow: var(--shadow);
+}
+
+.logout-button {
+  margin-left: auto;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  font-weight: 900;
 }
 
 .brand-mark {

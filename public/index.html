@@ -12,13 +12,32 @@
     <link rel="stylesheet" href="styles.css?v=20260823-construction-admin" />
   </head>
   <body>
-    <main class="app">
+    <section class="access-gate" id="accessGate">
+      <form class="access-card" id="accessForm">
+        <span class="brand-mark">PL</span>
+        <h1>En construction</h1>
+        <p>Le site est temporairement accessible uniquement à l’admin Norbert.</p>
+        <label>
+          Admin
+          <input id="adminName" type="text" autocomplete="username" placeholder="Norbert" />
+        </label>
+        <label>
+          Mot de passe
+          <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" />
+        </label>
+        <button class="primary-button" type="submit">Entrer</button>
+        <p class="access-error" id="accessError" hidden>Accès refusé.</p>
+      </form>
+    </section>
+
+    <main class="app" id="appShell" hidden>
       <section class="construction-card">
         <span class="brand-mark">PL</span>
         <div>
           <h1>En construction</h1>
           <p>Le site Pronostics PL 26 -27 est temporairement inaccessible pendant la mise à jour.</p>
         </div>
+        <button class="logout-button" id="logoutBtn" type="button">Déconnexion</button>
       </section>
 
       <nav class="tabs" aria-label="Navigation">

@@ -1,4 +1,7 @@
 const storageKey = "novaprono-construction-admin-v1";
+const accessKey = "novaprono-admin-access-v1";
+const adminName = "norbert";
+const adminPassword = "1234";
 
 const bonusRows = [
   ["Draki", "Champion", "Arsenal"],
@@ -96,6 +99,13 @@ const defaultState = {
 let state = loadState();
 
 const els = {
+  accessGate: document.querySelector("#accessGate"),
+  accessForm: document.querySelector("#accessForm"),
+  accessName: document.querySelector("#adminName"),
+  accessPassword: document.querySelector("#adminPassword"),
+  accessError: document.querySelector("#accessError"),
+  appShell: document.querySelector("#appShell"),
+  logoutBtn: document.querySelector("#logoutBtn"),
   tabs: document.querySelectorAll("[data-tab]"),
   panels: document.querySelectorAll("[data-panel]"),
   bonusBody: document.querySelector("#bonusBody"),
@@ -108,13 +118,19 @@ const els = {
   adminStatus: document.querySelector("#adminStatus"),
 };
 
+els.accessForm.addEventListener("submit", handleAccessSubmit);
+els.logoutBtn.addEventListener("click", lockSite);
 els.tabs.forEach((tab) => {
   tab.addEventListener("click", () => setTab(tab.dataset.tab));
 });
 els.saveAdminBtn.addEventListener("click", saveAdminValues);
 els.resetAdminBtn.addEventListener("click", resetAdminValues);
 
-render();
+if (sessionStorage.getItem(accessKey) === "ok") {
+  unlockSite();
+} else {
+  lockSite();
+}
 
 function loadState() {
   try {
@@ -152,6 +168,38 @@ function render() {
   renderBonusTable();
   renderRanking();
   renderAdmin();
+}
+
+function handleAccessSubmit(event) {
+  event.preventDefault();
+  const nameOk = normalize(els.accessName.value) === adminName;
+  const passwordOk = els.accessPassword.value === adminPassword;
+
+  if (!nameOk || !passwordOk) {
+    els.accessError.hidden = false;
+    els.accessPassword.value = "";
+    els.accessPassword.focus();
+    return;
+  }
+
+  sessionStorage.setItem(accessKey, "ok");
+  unlockSite();
+}
+
+function unlockSite() {
+  els.accessGate.hidden = true;
+  els.appShell.hidden = false;
+  els.accessError.hidden = true;
+  render();
+}
+
+function lockSite() {
+  sessionStorage.removeItem(accessKey);
+  els.accessGate.hidden = false;
+  els.appShell.hidden = true;
+  els.accessPassword.value = "";
+  els.accessName.value = "";
+  els.accessName.focus();
 }
 
 function setTab(name) {
