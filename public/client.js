@@ -213,12 +213,16 @@ function renderBonusTable() {
 
   bonusRows.forEach(([player, category, choice], index) => {
     const previousPlayer = bonusRows[index - 1]?.[0];
+    const official = state.official[category] || "";
+    const points = pointsForBonusChoice(category, choice, official);
     const row = document.createElement("tr");
     if (player !== previousPlayer) row.classList.add("player-start");
     row.innerHTML = `
       <td>${escapeHtml(player)}</td>
       <td>${escapeHtml(category)}</td>
       <td>${escapeHtml(choice)}</td>
+      <td>${official ? escapeHtml(official) : '<span class="muted">-</span>'}</td>
+      <td><strong>${points}</strong></td>
     `;
     els.bonusBody.append(row);
   });
@@ -316,9 +320,13 @@ function bonusPointsFor(player) {
   return bonusRows
     .filter(([rowPlayer]) => rowPlayer === player)
     .reduce((total, [, category, choice]) => {
-      if (!same(choice, state.official[category], category)) return total;
-      return total + (bonusPointValues[category] || 0);
+      return total + pointsForBonusChoice(category, choice, state.official[category]);
     }, 0);
+}
+
+function pointsForBonusChoice(category, choice, official) {
+  if (!same(choice, official, category)) return 0;
+  return bonusPointValues[category] || 0;
 }
 
 function same(a, b, category) {

@@ -249,6 +249,11 @@ tbody tr:nth-child(odd) {
   font-weight: 900;
 }
 
+.muted {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .rank {
   display: inline-grid;
   min-width: 28px;
