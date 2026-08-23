@@ -1867,9 +1867,9 @@ function renderMatches() {
 function renderRegisteredSeasonBonusTable() {
   const wrapper = document.createElement("div");
   wrapper.className = "registered-bonus-table-wrap";
-  const grouped = registeredSeasonBonusRows.reduce((acc, [player, category, choice, points]) => {
+  const grouped = registeredSeasonBonusRows.reduce((acc, [player, category, choice]) => {
     if (!acc[player]) acc[player] = [];
-    acc[player].push({ category, choice, points });
+    acc[player].push({ category, choice });
     return acc;
   }, {});
   const playerCount = Object.keys(grouped).length;
@@ -1885,7 +1885,6 @@ function renderRegisteredSeasonBonusTable() {
           <th>Joueur</th>
           <th>Bonus</th>
           <th>Choix</th>
-          <th>Pts</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -1893,7 +1892,7 @@ function renderRegisteredSeasonBonusTable() {
   `;
 
   const body = wrapper.querySelector("tbody");
-  registeredSeasonBonusRows.forEach(([player, category, choice, points], index, rows) => {
+  registeredSeasonBonusRows.forEach(([player, category, choice], index, rows) => {
     const previousPlayer = rows[index - 1]?.[0];
     const row = document.createElement("tr");
     if (player !== previousPlayer) row.classList.add("player-start");
@@ -1901,7 +1900,6 @@ function renderRegisteredSeasonBonusTable() {
       <td>${escapeHtml(player)}</td>
       <td>${escapeHtml(category)}</td>
       <td>${escapeHtml(choice)}</td>
-      <td>${points}</td>
     `;
     body.append(row);
   });

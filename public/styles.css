@@ -1541,3 +1541,10 @@ form button {
     padding: 0.5rem 0.42rem !important;
   }
 }
+
+/* No points column in bonus-only table */
+.registered-bonus-table td:last-child {
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+}
