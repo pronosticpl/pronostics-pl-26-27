@@ -25,7 +25,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -315,7 +316,8 @@ tbody tr:nth-child(odd) {
   font-weight: 900;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 42px;
   padding: 8px 10px;
@@ -678,7 +680,8 @@ input {
     padding: 8px;
   }
 
-  input {
+  input,
+  select {
     min-height: 34px;
     padding: 6px;
     font-size: 0.8rem;

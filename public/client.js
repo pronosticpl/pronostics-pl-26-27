@@ -96,6 +96,7 @@ const defaultState = {
   official: Object.fromEntries(categories.map((category) => [category, ""])),
   points: Object.fromEntries(players.map((player) => [player, { bonus: 0, pronostics: 0 }])),
   currentRound: "",
+  currentRoundStatus: "complete",
   history: [],
 };
 
@@ -120,6 +121,7 @@ const els = {
   officialForm: document.querySelector("#officialForm"),
   adminPointsBody: document.querySelector("#adminPointsBody"),
   roundInput: document.querySelector("#roundInput"),
+  roundStatus: document.querySelector("#roundStatus"),
   saveAdminBtn: document.querySelector("#saveAdminBtn"),
   resetAdminBtn: document.querySelector("#resetAdminBtn"),
   adminStatus: document.querySelector("#adminStatus"),
@@ -165,6 +167,7 @@ function mergeMiniState(saved) {
   });
 
   next.currentRound = saved.currentRound ? String(saved.currentRound) : "";
+  next.currentRoundStatus = saved.currentRoundStatus === "incomplete" ? "incomplete" : "complete";
   next.history = normalizeHistory(saved.history);
 
   return next;
@@ -341,6 +344,7 @@ function renderEvolution() {
 
 function renderAdmin() {
   els.roundInput.value = state.currentRound || "";
+  els.roundStatus.value = state.currentRoundStatus || "complete";
   els.officialForm.innerHTML = "";
   categories.forEach((category) => {
     const label = document.createElement("label");
@@ -376,6 +380,7 @@ async function saveAdminValues() {
     state.points[player].pronostics = numberOrZero(input.value);
   });
   state.currentRound = els.roundInput.value.trim();
+  state.currentRoundStatus = els.roundStatus.value === "incomplete" ? "incomplete" : "complete";
   recordRoundSnapshot();
 
   render();
@@ -423,7 +428,13 @@ function recordRoundSnapshot() {
   const rows = currentRankingRows();
   const totals = Object.fromEntries(rows.map((row) => [row.player, row.total]));
   const pronostics = Object.fromEntries(rows.map((row) => [row.player, row.pronostics]));
-  const nextEntry = { round, totals, pronostics, savedAt: new Date().toISOString() };
+  const nextEntry = {
+    round,
+    complete: state.currentRoundStatus !== "incomplete",
+    totals,
+    pronostics,
+    savedAt: new Date().toISOString(),
+  };
   state.history = [
     ...normalizeHistory(state.history).filter((entry) => entry.round !== round),
     nextEntry,
@@ -443,6 +454,7 @@ function normalizeHistory(history) {
         pronostics[player] = numberOrZero(entry?.pronostics?.[player]);
         return pronostics;
       }, {}),
+      complete: entry?.complete !== false,
       savedAt: typeof entry?.savedAt === "string" ? entry.savedAt : "",
     }))
     .filter((entry) => entry.round > 0)
@@ -452,8 +464,10 @@ function normalizeHistory(history) {
 function latestDayWinner() {
   const orderedHistory = normalizeHistory(state.history);
   if (!orderedHistory.length) return "";
-  const latest = orderedHistory.at(-1);
-  const previous = orderedHistory.length > 1 ? orderedHistory.at(-2) : null;
+  const latest = [...orderedHistory].reverse().find((entry) => entry.complete);
+  if (!latest) return "";
+  const latestIndex = orderedHistory.findIndex((entry) => entry.round === latest.round);
+  const previous = latestIndex > 0 ? orderedHistory[latestIndex - 1] : null;
   const scores = players.map((player) => ({
     player,
     points: numberOrZero(latest.pronostics?.[player]) - numberOrZero(previous?.pronostics?.[player]),
