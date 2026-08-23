@@ -460,8 +460,11 @@ function latestDayWinner() {
   }));
   const best = Math.max(0, ...scores.map((score) => score.points));
   if (!best) return "";
-  const winners = scores.filter((score) => score.points === best).map((score) => score.player);
-  return `J${latest.round}: ${winners.join(" / ")} (${best} pts)`;
+  const rankingOrder = new Map(currentRankingRows().map((row, index) => [row.player, index]));
+  const winner = scores
+    .filter((score) => score.points === best)
+    .sort((a, b) => (rankingOrder.get(a.player) ?? 999) - (rankingOrder.get(b.player) ?? 999))[0];
+  return `J${latest.round}: ${winner.player} (${best} pts)`;
 }
 
 function officialMatchesFor(player) {
