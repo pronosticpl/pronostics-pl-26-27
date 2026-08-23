@@ -343,46 +343,172 @@ input {
 }
 
 @media (max-width: 760px) {
+  body {
+    font-size: 12px;
+  }
+
   .app {
-    width: min(100% - 14px, 1180px);
-    padding-top: 8px;
+    width: min(100% - 8px, 1180px);
+    padding-top: 4px;
   }
 
   .construction-card {
     align-items: flex-start;
-    padding: 14px;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 9px;
   }
 
   .brand-mark {
-    width: 48px;
-    height: 48px;
-    font-size: 1.25rem;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+  }
+
+  .construction-card p {
+    margin-top: 3px;
+    font-size: 0.72rem;
+  }
+
+  .logout-button {
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+  }
+
+  .tabs {
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+
+  .tab {
+    min-height: 34px;
+    padding: 0 9px;
+    font-size: 0.78rem;
   }
 
   .panel {
-    padding: 10px;
+    padding: 6px;
   }
 
   .panel-header {
     align-items: flex-start;
     flex-direction: column;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .panel-header h2 {
+    font-size: 1rem;
+  }
+
+  .panel-header span {
+    padding: 5px 7px;
+    font-size: 0.72rem;
   }
 
   table {
     min-width: 0;
-    font-size: 0.78rem;
+    font-size: 0.62rem;
   }
 
   th,
   td {
-    padding: 8px 6px;
+    padding: 5px 3px;
+    line-height: 1.12;
+  }
+
+  .bonus-table th:nth-child(1)::after {
+    content: "Joueur";
+  }
+
+  .bonus-table th:nth-child(2)::after {
+    content: "Bonus";
+  }
+
+  .bonus-table th:nth-child(3)::after {
+    content: "Choix";
+  }
+
+  .bonus-table th:nth-child(4)::after {
+    content: "Off.";
+  }
+
+  .bonus-table th:nth-child(5)::after {
+    content: "Pts";
+  }
+
+  .ranking-table th:nth-child(1)::after {
+    content: "#";
+  }
+
+  .ranking-table th:nth-child(2)::after {
+    content: "Joueur";
+  }
+
+  .ranking-table th:nth-child(3)::after {
+    content: "Bonus";
+  }
+
+  .ranking-table th:nth-child(4)::after {
+    content: "Prono";
+  }
+
+  .ranking-table th:nth-child(5)::after {
+    content: "Total";
+  }
+
+  .bonus-table th,
+  .ranking-table th {
+    font-size: 0;
+  }
+
+  .bonus-table th::after,
+  .ranking-table th::after {
+    font-size: 0.62rem;
+  }
+
+  .bonus-table td:first-child,
+  .ranking-table td:nth-child(2),
+  .admin-table td:first-child {
+    white-space: normal;
+  }
+
+  .rank {
+    min-width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    font-size: 0.62rem;
   }
 
   .admin-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .admin-block {
+    padding: 8px;
+  }
+
+  input {
+    min-height: 34px;
+    padding: 6px;
+    font-size: 0.8rem;
   }
 
   .admin-table {
-    min-width: 440px;
+    min-width: 360px;
+  }
+
+  .primary-button,
+  .ghost-button {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 0.8rem;
   }
 }
