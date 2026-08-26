@@ -6,61 +6,59 @@
     <title>Pronostics PL 26 -27</title>
     <meta http-equiv="Cache-Control" content="no-store" />
     <meta name="theme-color" content="#1f6b43" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260823-participants-admin" />
-    <link rel="icon" href="/assets/app-icon-192.png?v=20260823-participants-admin" type="image/png" />
-    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260823-participants-admin" />
-    <link rel="stylesheet" href="styles.css?v=20260823-participants-admin" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260826-bonus-only" />
+    <link rel="icon" href="/assets/app-icon-192.png?v=20260826-bonus-only" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/app-icon-192.png?v=20260826-bonus-only" />
+    <link rel="stylesheet" href="styles.css?v=20260826-bonus-only" />
   </head>
   <body>
     <section class="access-gate" id="accessGate">
       <form class="access-card" id="accessForm">
         <span class="brand-mark">PL</span>
         <h1>Pronostics PL 26 -27</h1>
-        <p>Entre le mot de passe du groupe pour consulter le site.</p>
+        <p>Entre le mot de passe du groupe pour consulter les pronostics.</p>
         <label>
           Mot de passe
-          <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Mot de passe" />
+          <input id="sitePassword" type="password" autocomplete="current-password" placeholder="Mot de passe" />
         </label>
         <button class="primary-button" type="submit">Entrer</button>
-        <p class="access-error" id="accessError" hidden>Accès refusé.</p>
+        <p class="access-error" id="accessError" hidden>Mot de passe incorrect.</p>
       </form>
     </section>
 
     <main class="app" id="appShell" hidden>
-      <section class="construction-card">
+      <header class="construction-card">
         <span class="brand-mark">PL</span>
         <div>
           <h1>Pronostics PL 26 -27</h1>
-          <p>Consultation des bonus, du classement et des règles.</p>
-        </div>
-        <div class="header-stats">
-          <span>Leader : <strong id="leaderName">-</strong></span>
-          <span>Vainqueur journée : <strong id="dayWinnerName">-</strong></span>
+          <p>Pronostics bonus des joueurs</p>
         </div>
         <button class="logout-button" id="logoutBtn" type="button">Déconnexion</button>
-      </section>
+      </header>
 
       <nav class="tabs" aria-label="Navigation">
         <button class="tab is-active" type="button" data-tab="bonus">Pronostics bonus</button>
-        <button class="tab" type="button" data-tab="classement">Classement</button>
-        <button class="tab" type="button" data-tab="regles">Règles</button>
-        <button class="tab" type="button" data-tab="admin">Admin</button>
+        <button class="tab" type="button" data-tab="regles">Règles bonus</button>
       </nav>
 
-      <section class="panel is-active" id="bonusPanel" data-panel="bonus">
+      <section class="panel is-active" data-panel="bonus">
         <div class="panel-header">
           <h2>Pronostics bonus</h2>
-          <span id="bonusCount">0 choix</span>
+          <span id="playerCount">0 joueurs</span>
         </div>
+
         <div class="table-wrap">
           <table class="bonus-table">
             <thead>
               <tr>
                 <th>Joueur</th>
-                <th>Bonus</th>
-                <th>Choix</th>
-                <th>Officiel (selon classement actuel)</th>
-                <th>Points</th>
+                <th>Champion</th>
+                <th>Buteur</th>
+                <th>Gardien</th>
+                <th>Joueur</th>
+                <th>Passeur</th>
+                <th>Attaque</th>
+                <th>Défense</th>
               </tr>
             </thead>
             <tbody id="bonusBody"></tbody>
@@ -68,48 +66,7 @@
         </div>
       </section>
 
-      <section class="panel" id="classementPanel" data-panel="classement">
-        <div class="panel-header">
-          <h2>Classement</h2>
-        </div>
-        <div class="table-wrap">
-          <table class="ranking-table">
-            <thead>
-              <tr>
-                <th>Rang</th>
-                <th>Joueur</th>
-                <th>Points bonus</th>
-                <th>Points pronostics</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="rankingBody"></tbody>
-          </table>
-        </div>
-
-        <section class="evolution-section">
-          <div class="panel-header compact-header">
-            <h2>Évolution</h2>
-          </div>
-          <div class="chart-wrap" id="evolutionChart"></div>
-          <div class="day-wins-block">
-            <h3>Journées gagnées</h3>
-            <div class="table-wrap">
-              <table class="day-wins-table">
-                <thead>
-                  <tr>
-                    <th>Joueur</th>
-                    <th>Journées gagnées</th>
-                  </tr>
-                </thead>
-                <tbody id="dayWinsBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <section class="panel" id="reglesPanel" data-panel="regles">
+      <section class="panel" data-panel="regles">
         <div class="panel-header">
           <h2>Règles bonus</h2>
         </div>
@@ -127,110 +84,24 @@
             </ul>
           </article>
           <article class="rule-card">
-            <h3>Vainqueur de journée</h3>
+            <h3>Calcul des bonus</h3>
             <ul>
-              <li>Le vainqueur de journée est calculé uniquement avec les points pronostics de la journée.</li>
-              <li>En cas d’égalité entre deux ou plusieurs joueurs, le mieux classé au classement général remporte la journée.</li>
-              <li>Une journée est validée seulement quand tous les matchs de cette journée sont terminés.</li>
-              <li>Si une journée est incomplète, les points déjà obtenus comptent dans le classement, mais aucun vainqueur de journée n’est désigné.</li>
-              <li>Dès que la journée est complète, le vainqueur de journée est calculé automatiquement.</li>
-              <li>Le vainqueur de journée peut changer la photo du groupe.</li>
+              <li>Les bonus sont calculés selon les réponses officielles de fin de saison.</li>
+              <li>Pour les joueurs, le nom complet n’est pas obligatoire si le choix est clairement identifiable.</li>
+              <li>Exemple : Haaland peut compter pour Erling Haaland, Raya peut compter pour David Raya.</li>
             </ul>
           </article>
           <article class="rule-card">
-            <h3>Égalité finale</h3>
+            <h3>Pronostics bonus</h3>
             <ul>
-              <li>En cas d’égalité à la fin du championnat, le départage se fait avec les points pronostics.</li>
-              <li>Si l’égalité reste, le départage se fait avec les points bonus.</li>
-              <li>Si l’égalité reste encore, le départage se fait avec le nombre de journées gagnées.</li>
+              <li>Les pronostics bonus affichés sur cette page sont les choix enregistrés des joueurs.</li>
+              <li>Cette page sert uniquement à consulter les pronostics bonus.</li>
             </ul>
           </article>
-        </div>
-      </section>
-
-      <section class="panel" id="adminPanel" data-panel="admin">
-        <div class="panel-header">
-          <h2>Admin Norbert</h2>
-          <span>Champs à remplir</span>
-        </div>
-
-        <form class="admin-lock" id="adminUnlockForm">
-          <h3>Accès admin</h3>
-          <label>
-            Mot de passe admin
-            <input id="adminUnlockPassword" type="password" autocomplete="current-password" placeholder="Mot de passe admin" />
-          </label>
-          <button class="primary-button" type="submit">Ouvrir admin</button>
-          <p class="access-error" id="adminUnlockError" hidden>Mot de passe admin incorrect.</p>
-        </form>
-
-        <div id="adminContent" hidden>
-        <div class="admin-grid">
-          <section class="admin-block">
-            <h3>Journée</h3>
-            <label class="round-field">
-              Numéro de journée
-              <input id="roundInput" type="number" min="1" step="1" placeholder="Exemple : 1" />
-            </label>
-            <label class="round-field">
-              Statut
-              <select id="roundStatus">
-                <option value="complete">Journée complète</option>
-                <option value="incomplete">Journée incomplète</option>
-              </select>
-            </label>
-            <p class="hint">Une journée incomplète compte pour le classement, mais ne donne pas encore de vainqueur de journée.</p>
-          </section>
-
-          <section class="admin-block">
-            <h3>Journées enregistrées</h3>
-            <div class="table-wrap">
-              <table class="admin-table round-table">
-                <thead>
-                  <tr>
-                    <th>Journée</th>
-                    <th>Statut</th>
-                    <th>Vainqueur</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="roundHistoryBody"></tbody>
-              </table>
-            </div>
-            <p class="hint">Reprendre remet les points de cette journée dans les champs Admin pour pouvoir corriger ou valider plus tard.</p>
-          </section>
-
-          <section class="admin-block">
-            <h3>Bonus officiels</h3>
-            <div class="official-form" id="officialForm"></div>
-          </section>
-
-          <section class="admin-block">
-            <h3>Points pronostics</h3>
-            <div class="table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Joueur</th>
-                    <th>Points bonus automatiques</th>
-                    <th>Points pronostics</th>
-                  </tr>
-                </thead>
-                <tbody id="adminPointsBody"></tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-
-        <div class="admin-actions">
-          <button class="primary-button" id="saveAdminBtn" type="button">Enregistrer</button>
-          <button class="ghost-button" id="resetAdminBtn" type="button">Remettre à zéro</button>
-        </div>
-        <p class="status" id="adminStatus">Les changements seront sauvegardés dans Supabase.</p>
         </div>
       </section>
     </main>
 
-    <script src="client.js?v=20260823-participants-admin"></script>
+    <script src="client.js?v=20260826-bonus-only"></script>
   </body>
 </html>
